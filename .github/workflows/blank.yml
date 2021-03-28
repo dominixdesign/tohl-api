@@ -23,7 +23,7 @@ jobs:
         uses: carlosperate/download-file-action@v1.0.3
         id: download-poetry
         with:
-            file-url: 'http://my-tohl.org/transfer/upload.zip'
+            file-url: ${{ secrets.TOHL_FILE_URL }}
             file-name: 'tohl_data.zip'
             location: './new-folder-to-be-created'
       - name: Print the file path
