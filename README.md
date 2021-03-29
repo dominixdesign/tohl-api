@@ -1,7 +1,18 @@
 # TOHL API
 
 
-## paths
+## workflow
+
+* Upload of FHLSim export on TOHL page triggers `repository_dispatch` action.
+* `repository_dispatch` triggers gitlab build action
+* build action loads zip file from TOHL page and extracts it
+* update api data from FHLSim export.
+
+## player ids
+
+Player ID is just `firstname_lastname` in all lowercase. e.g. 'ryan_damyt'
+
+## endpoints
 
 ### player
 `/api/p/<id>` --> Player Details

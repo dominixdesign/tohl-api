@@ -1,0 +1,42 @@
+{
+  "name": "tohl-api",
+  "version": "1.0.0",
+  "description": "TOHL API",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dominixdesign/tohl-api.git"
+  },
+  "keywords": [
+    "FHLSim",
+    "TOHL",
+    "API"
+  ],
+  "author": "Dominik Sander",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dominixdesign/tohl-api/issues"
+  },
+  "homepage": "https://github.com/dominixdesign/tohl-api#readme",
+  "dependencies": {
+    "mkdirp": "^1.0.4",
+    "sqlite3": "^5.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^7.23.0",
+    "eslint-config-recommended": "^4.1.0",
+    "eslint-plugin-node": "^11.1.0",
+    "nodemon": "^2.0.7"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "index",
+      "updater"
+    ],
+    "ext": "js",
+    "delay": "3"
+  }
+}
