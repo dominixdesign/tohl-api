@@ -22,15 +22,17 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: Download a file
+      - name: Download Export File
         uses: carlosperate/download-file-action@v1.0.3
         id: download-poetry
         with:
             file-url: ${{ secrets.TOHL_FILE_URL }}
             file-name: 'tohl_data.zip'
-            location: './new-folder-to-be-created'
-      - name: Print the file path
-        run: echo "The file was downloaded to ${{ steps.download-poetry.outputs.file-path }}"
+            location: './upload'
+      - name: Decompress
+        uses: TonyBogdanov/zip@1.0
+        with:
+          args: unzip -qq ${{ steps.download-poetry.outputs.file-path }} -d ./import-data
         
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
