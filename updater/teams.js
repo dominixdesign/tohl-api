@@ -1,14 +1,8 @@
-const fs = require('fs')
+const loadFHLFile = require('../lib/filesystem/loadFHLFile')
 
 module.exports = {
   run: (db) => {
-    let rawHtml = ''
-
-    try {
-      rawHtml = fs.readFileSync('./import-data/TOHL11Rosters.html', 'utf8')
-    } catch (err) {
-      console.error(err)
-    }
+    let rawHtml = loadFHLFile('Rosters')
 
     const teams = rawHtml.split('<H2>')
     teams.map((html) => {
