@@ -1,4 +1,6 @@
 const fs = require('fs')
+const loadFHLFile = require('../lib/filesystem/loadFHLFile')
+const detectSeason = require('../lib/detectSeason')
 const mkdirp = require('mkdirp')
 var getDirName = require('path').dirname
 
@@ -35,18 +37,8 @@ const generatePlayerId = (name) => {
 
 module.exports = {
   run: () => {
-    let rawHtml = ''
-
-    try {
-      rawHtml = fs.readFileSync('./import-data/TOHL11Rosters.html', 'utf8')
-    } catch (err) {
-      console.error(err)
-    }
-
-    let season = rawHtml.match(
-      /TITLE>(?<season>[A-Z0-9]+) Team Rosters<\/TITLE/
-    )
-    console.log(season.groups.season)
+    const season = detectSeason()
+    let rawHtml = loadFHLFile('Rosters')
 
     const teams = rawHtml.split('<H2>')
     teams.map((html) => {
@@ -59,15 +51,32 @@ module.exports = {
             for (const [key, value] of Object.entries(playerData.groups)) {
               playerData.groups[key] = value.trim()
             }
-
-            // write player files
-            const path =
+            const playerfile =
               playerFolder +
               generatePlayerId(playerData.groups.name) +
-              '/index.html'
+              '/index.json'
 
-            mkdirp.sync(getDirName(path))
-            fs.writeFileSync(path, JSON.stringify(playerData.groups))
+            // load existing data
+            let playerJson = null
+            try {
+              playerJson = fs.readFileSync(playerfile, 'utf8')
+            } catch (err) {
+              playerJson = '{}'
+            }
+            const filePlayer = JSON.parse(playerJson)
+            const { name, hand, ...seasonData } = playerData.groups
+
+            // merge new data with existing data
+            const newData = {
+              name,
+              hand,
+              [season]: seasonData,
+              ...filePlayer
+            }
+
+            // write new data
+            mkdirp.sync(getDirName(playerfile))
+            fs.writeFileSync(playerfile, JSON.stringify(newData))
           }
         })
       }
