@@ -41,6 +41,13 @@ jobs:
 
       - name: Generate
         run: node index.js
+        
+      - name: Add & Commit
+        uses: EndBug/add-and-commit@v7.1.0
+        with:
+          add: 'api'
+          message: 'Automatic api update'
+
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
