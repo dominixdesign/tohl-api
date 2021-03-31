@@ -1,10 +1,8 @@
-const fs = require('fs')
 const loadFHLFile = require('../lib/filesystem/loadFHLFile')
+const writePlayer = require('../lib/filesystem/writePlayer')
+const writeTeamRoster = require('../lib/filesystem/writeTeamRoster')
+const generatePlayerId = require('../lib/playerId')
 const detectSeason = require('../lib/detectSeason')
-const mkdirp = require('mkdirp')
-var getDirName = require('path').dirname
-
-const playerFolder = 'api/p/'
 
 const playerRowPattern = new RegExp(
   [
@@ -31,10 +29,6 @@ const playerRowPattern = new RegExp(
   ].join('')
 )
 
-const generatePlayerId = (name) => {
-  return name.replace(' ', '_').toLowerCase()
-}
-
 module.exports = {
   run: () => {
     const season = detectSeason()
@@ -44,6 +38,8 @@ module.exports = {
     teams.map((html) => {
       let teamnameRegex = html.match(/>([A-Z]{1,20})</)
       if (teamnameRegex) {
+        const teamId = teamnameRegex[1].toLowerCase()
+        console.log()
         let players = html.split('\r\n')
         players.map((playerrow) => {
           let playerData = playerRowPattern.exec(playerrow)
@@ -51,37 +47,19 @@ module.exports = {
             for (const [key, value] of Object.entries(playerData.groups)) {
               playerData.groups[key] = value.trim()
             }
-            const playerfile =
-              playerFolder +
-              generatePlayerId(playerData.groups.name) +
-              '/index.json'
-
-            // load existing data
-            let playerJson = null
-            try {
-              playerJson = fs.readFileSync(playerfile, 'utf8')
-            } catch (err) {
-              playerJson = '{}'
-            }
-            const filePlayer = JSON.parse(playerJson)
             const { name, hand, ...seasonData } = playerData.groups
-
-            // merge new data with existing data
-            const newData = {
+            const playerId = generatePlayerId(playerData.groups.name)
+            writePlayer(playerData.groups.name, {
               name,
               hand,
-              [season]: seasonData,
-              ...filePlayer
-            }
-
-            // write new data
-            mkdirp.sync(getDirName(playerfile))
-            fs.writeFileSync(playerfile, JSON.stringify(newData))
+              [season]: seasonData
+            })
+            writeTeamRoster(teamId, season, {
+              [playerId]: playerData.groups
+            })
           }
         })
       }
     })
-
-    //console.log(JSON.stringify(playersObject))
   }
 }
