@@ -1,8 +1,8 @@
-const loadFHLFile = require('../lib/filesystem/loadFHLFile')
-const writePlayer = require('../lib/filesystem/writePlayer')
-const writeTeamRoster = require('../lib/filesystem/writeTeamRoster')
-const generatePlayerId = require('../lib/playerId')
-const detectSeason = require('../lib/detectSeason')
+const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
+const writePlayer = require('../../lib/filesystem/writePlayer')
+const writeTeamRoster = require('../../lib/filesystem/writeTeamRoster')
+const generatePlayerId = require('../../lib/playerId')
+const detectSeason = require('../../lib/detectSeason')
 
 const playerRowPattern = new RegExp(
   [
@@ -39,7 +39,6 @@ module.exports = {
       let teamnameRegex = html.match(/>([A-Z]{1,20})</)
       if (teamnameRegex) {
         const teamId = teamnameRegex[1].toLowerCase()
-        console.log()
         let players = html.split('\r\n')
         players.map((playerrow) => {
           let playerData = playerRowPattern.exec(playerrow)

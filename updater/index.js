@@ -1,7 +1,7 @@
 const teams = require('./teams')
-const player = require('./player')
+const playerRosterData = require('./player/rosterData')
 
 module.exports = {
   teams,
-  player
+  playerRosterData
 }
