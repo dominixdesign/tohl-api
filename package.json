@@ -22,6 +22,8 @@
   },
   "homepage": "https://github.com/dominixdesign/tohl-api#readme",
   "dependencies": {
+    "lodash.get": "^4.4.2",
+    "lodash.merge": "^4.6.2",
     "lodash.set": "^4.3.2",
     "mkdirp": "^1.0.4",
     "sqlite3": "^5.0.2"
