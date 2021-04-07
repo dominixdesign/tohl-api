@@ -118,3 +118,4 @@ dist
 #tohl-import folder
 import-data/
 upload/
+.run-only
