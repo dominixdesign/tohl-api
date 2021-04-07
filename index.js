@@ -27,8 +27,8 @@ Object.keys(updater).map((update) => {
   }
 })
 
-//db.each('SELECT rowid AS id, sim_name FROM teams', function (err, row) {
-// console.log(row.id + ': ' + row.sim_name)
-//})
+db.each('SELECT rowid AS id, sim_name, sim_id FROM teams', function (err, row) {
+  console.log(`${row.id}: ${row.sim_name} (${row.sim_id})`)
+})
 
 db.close()
