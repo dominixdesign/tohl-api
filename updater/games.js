@@ -1,9 +1,12 @@
 const fs = require('fs'),
   xpath = require('xpath'),
+  _at = require('lodash.at'),
   dom = require('xmldom').DOMParser,
   loadFHLFile = require('../lib/filesystem/loadFHLFile'),
+  detectSeason = require('../lib/detectSeason'),
   playerId = require('../lib/playerId'),
-  parseScoreTable = require('./games/parseScoreTable')
+  parseScoreTable = require('./games/parseScoreTable'),
+  writePlayer = require('../lib/filesystem/writePlayer')
 
 let rawdata = fs.readFileSync('./api/playerlastnames.json')
 let playersByLastname = JSON.parse(rawdata)
@@ -86,21 +89,69 @@ module.exports = {
             if (goalData) {
               // it's a goal!
               // id mapping
-              goalData.groups.goalscorer = mapLastNameToPlayer(
-                goalData.groups.goalscorer.toLowerCase()
-              )
-              if (goalData.groups.primaryassist) {
-                goalData.groups.primaryassist = mapLastNameToPlayer(
-                  goalData.groups.primaryassist.toLowerCase()
-                )
+              // playernames
+              let [
+                goalscorer,
+                primaryassist,
+                secondaryassist
+              ] = _at(goalData.groups, [
+                'goalscorer',
+                'primaryassist',
+                'secondaryassist'
+              ]).map((p) => p && mapLastNameToPlayer(p.toLowerCase()))
+
+              // time
+              const time = {
+                min: parseInt(goalData.groups.min) + (period - 1) * 20,
+                sec: parseInt(goalData.groups.sec)
               }
-              if (goalData.groups.secondaryassist) {
-                goalData.groups.secondaryassist = mapLastNameToPlayer(
-                  goalData.groups.secondaryassist.toLowerCase()
-                )
-              }
+
+              // score
               score[goalData.groups.team.toLowerCase()]++
-              console.log(goalData.groups, score, period)
+
+              // situation
+              const situation = goalData.groups.pp
+                ? 'pp'
+                : goalData.groups.sh
+                ? 'sh'
+                : null
+
+              const goalId = `${gameNumber}-${time.min}-${time.sec}`
+              const goal = {
+                goalscorer,
+                primaryassist,
+                secondaryassist,
+                score,
+                period,
+                time,
+                situation
+              }
+
+              // write players
+              if (goalscorer.includes('_')) {
+                writePlayer(
+                  goalscorer,
+                  { [goalId]: goal },
+                  detectSeason(),
+                  'goals'
+                )
+              }
+              if (primaryassist.includes('_')) {
+                writePlayer(
+                  primaryassist,
+                  { [goalId]: goal },
+                  detectSeason(),
+                  'assists'
+                )
+              }
+              if (secondaryassist && secondaryassist.includes('_')) {
+                writePlayer(
+                  secondaryassist,
+                  { [goalId]: goal },
+                  detectSeason(),
+                  'assists'
+                )
+              }
             }
           }
         })
