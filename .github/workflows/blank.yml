@@ -49,13 +49,12 @@ jobs:
           message: 'Automatic api update'
 
       - name: ftp-upload-action
-        uses: GenieTim/ftp-action@v4.0.1
+        uses: sebastianpopp/ftp-action@releases/v2
         with:
           host: ${{ secrets.FTP_HOST }}
           user: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
           localDir: "dist"
-          remoteDir: "."
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
