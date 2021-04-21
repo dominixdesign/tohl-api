@@ -54,7 +54,7 @@ jobs:
           host: ${{ secrets.FTP_HOST }}
           user: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          localDir: "dist"
+          localDir: "api"
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
