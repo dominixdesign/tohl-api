@@ -48,14 +48,6 @@ jobs:
           add: 'api'
           message: 'Automatic api update'
 
-      - name: ftp-upload-action
-        uses: sebastianpopp/ftp-action@releases/v2
-        with:
-          host: ${{ secrets.FTP_HOST }}
-          user: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          localDir: "api"
-
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
