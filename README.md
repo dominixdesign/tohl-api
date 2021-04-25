@@ -1,9 +1,9 @@
 # TOHL API
 
 ## design inspiration
-https://dribbble.com/shots/7482817-Liverpool-FC-eCommerce-Concept
-https://www.tiajasmin.com/wp-content/uploads/2020/01/MiniPlans_Feature.jpg
-https://dribbble.com/shots/2202572-Kontinental-Hockey-League-Redesign-Concept/attachments/407875?mode=media
+https://dribbble.com/shots/7482817-Liverpool-FC-eCommerce-Concept   
+https://www.tiajasmin.com/wp-content/uploads/2020/01/MiniPlans_Feature.jpg   
+https://dribbble.com/shots/2202572-Kontinental-Hockey-League-Redesign-Concept/attachments/407875?mode=media   
 
 
 ## workflow
@@ -24,7 +24,9 @@ Player ID is just `firstname_lastname` in all lowercase. e.g. 'ryan_damyt'
 `/api/p/<id>/trades` --> Player Trade
 
 #### player and season
-`/api/p/<id>/gamelogs/<seasonid>` --> Player Gamelogs
+`/api/p/<id>/<seasonid>/gamelogs.json` --> Player Gamelogs
+`/api/p/<id>/<seasonid>/goals.json` --> Players Goals
+`/api/p/<id>/<seasonid>/assist.json` --> Players Assist
 
 ------
 

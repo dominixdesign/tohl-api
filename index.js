@@ -16,7 +16,7 @@ try {
   // error
 }
 
-const db = new sqlite3.Database(':memory:')
+const db = new sqlite3.Database('./db/db')
 
 const { initDatabase } = require('./db/init')
 initDatabase(db)

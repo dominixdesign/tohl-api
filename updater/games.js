@@ -51,6 +51,7 @@ module.exports = {
       if (rawHtml === false) {
         gameExists = false
       } else {
+        const gamedata = {}
         //cleanup html
         //rawHtml = rawHtml.replace('<FONT SIZE -1>', '')
         const doc = new dom({
@@ -65,13 +66,21 @@ module.exports = {
           .toLowerCase()
           .split(' at ')
 
+        gamedata.home = home
+        gamedata.away = away
+
         // parse shots and goals
         const shots = parseScoreTable(doc, home, away, '1')
         const goals = parseScoreTable(doc, home, away, '3')
-        console.log({ shots, goals })
+
+        gamedata.shots = shots
+        gamedata.score = goals
 
         // split HTML in four parts (INtro, Scoring, Team1, Team2 + Farm)
         const htmlParts = rawHtml.split('<BR><BR>')
+
+        gamedata.goals = []
+        gamedata.penalties = []
 
         // parse game events
         let period = 0,
@@ -126,6 +135,8 @@ module.exports = {
                 time,
                 situation
               }
+
+              gamedata.goals.push(goal)
 
               // write players
               if (goalscorer.includes('_')) {
