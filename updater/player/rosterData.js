@@ -1,9 +1,9 @@
 const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
 const writePlayer = require('../../lib/filesystem/writePlayer')
-const writePlayerNames = require('../../lib/filesystem/writePlayerNames')
 const writeTeamRoster = require('../../lib/filesystem/writeTeamRoster')
 const generatePlayerId = require('../../lib/playerId')
 const detectSeason = require('../../lib/detectSeason')
+const { run } = require('../../db/init')
 
 const playerRowPattern = new RegExp(
   [
@@ -31,7 +31,7 @@ const playerRowPattern = new RegExp(
 )
 
 module.exports = {
-  run: () => {
+  run: (db) => {
     const season = detectSeason()
     let rawHtml = loadFHLFile('Rosters')
 
@@ -54,14 +54,15 @@ module.exports = {
               hand,
               [season]: seasonData
             })
-            const [fname, lname] = name.split(' ', 2)
-            writePlayerNames(playerId, {
-              name,
-              lname,
-              fname
-            })
             writeTeamRoster(teamId, season, {
               [playerId]: playerData.groups
+            })
+
+            const [fname, lname] = name.split(' ', 2)
+            run('INSERT INTO players VALUES ($playerId, $fname, $lname)', {
+              playerId,
+              fname: fname.toLowerCase(),
+              lname: lname.toLowerCase()
             })
           }
         })

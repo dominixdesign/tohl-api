@@ -4,12 +4,9 @@ const fs = require('fs'),
   dom = require('xmldom').DOMParser,
   loadFHLFile = require('../lib/filesystem/loadFHLFile'),
   detectSeason = require('../lib/detectSeason'),
-  playerId = require('../lib/playerId'),
   parseScoreTable = require('./games/parseScoreTable'),
-  writePlayer = require('../lib/filesystem/writePlayer')
-
-let rawdata = fs.readFileSync('./api/playerlastnames.json')
-let playersByLastname = JSON.parse(rawdata)
+  writePlayer = require('../lib/filesystem/writePlayer'),
+  { all } = require('../db/init')
 
 const goalRowPattern = new RegExp(
   [
@@ -29,14 +26,12 @@ const goalRowPattern = new RegExp(
 )
 
 const mapLastNameToPlayer = (lastname) => {
-  if (!playersByLastname[lastname]) {
-    return lastname
-  }
-  if (playersByLastname[lastname].length === 1) {
-    return playerId(playersByLastname[lastname][0].name)
-  }
-  if (playersByLastname[lastname].length > 1) {
-    // TODO check if only one player is on the roster for this team in this game
+  const rows = all('SELECT player_id FROM players WHERE lastname = $lastname', {
+    lastname
+  })
+  if (rows.length === 1) {
+    return rows[0].player_id
+  } else {
     return lastname
   }
 }
