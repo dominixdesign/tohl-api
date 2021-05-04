@@ -47,3 +47,8 @@ jobs:
         with:
           add: 'api'
           message: 'Automatic api update'
+
+      - name: Webhook Action
+        uses: joelwmale/webhook-action@2.1.0
+        with:
+          url: http://webhook.api.my-tohl.org
