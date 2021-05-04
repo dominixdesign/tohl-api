@@ -51,4 +51,5 @@ jobs:
       - name: Webhook Action
         uses: joelwmale/webhook-action@2.1.0
         with:
-          url: http://webhook.api.my-tohl.org
+          url: http://webhook.api.my-tohl.org/webhook.php
+          body: 6jqQ3h7-iHNc4yx
