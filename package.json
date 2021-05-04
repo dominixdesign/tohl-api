@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "npx nodemon index.js",
-    "start:server": "echo 'server starts'"
+    "start:server": "echo 'server starts on port 3000'"
   },
   "repository": {
     "type": "git",
