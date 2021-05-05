@@ -1,5 +1,4 @@
-const fs = require('fs'),
-  xpath = require('xpath'),
+const xpath = require('xpath'),
   _at = require('lodash.at'),
   dom = require('xmldom').DOMParser,
   loadFHLFile = require('../lib/filesystem/loadFHLFile'),
@@ -23,6 +22,19 @@ const goalRowPattern = new RegExp(
     ':',
     '(?<sec>[0-9]{2})'
   ].join('')
+)
+
+const penaltiesRowPattern = new RegExp(
+  [
+    '(?<player>[A-Z]' + '\\' + '. [A-Z]*) ',
+    '(?<team>[A-Z0-9]{1,3}) ',
+    '' + '\\' + '((?<penalty>[A-Z-]*), ',
+    '(?<duration>Minor|Double Minor|Major)',
+    '(?<misconduct>, Game Misconduct)*' + '\\' + ') ',
+    '(?<minutes>[0-9]{2}):',
+    '(?<seconds>[0-9]{2})'
+  ].join(''),
+  'gm'
 )
 
 const mapLastNameToPlayer = (lastname) => {
@@ -158,6 +170,11 @@ module.exports = {
                   'assists'
                 )
               }
+            }
+
+            let myArray
+            while ((myArray = penaltiesRowPattern.exec(entry)) !== null) {
+              console.log(myArray.groups)
             }
           }
         })
