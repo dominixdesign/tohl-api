@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "npx nodemon index.js",
-    "start:server": "echo 'server starts on port 3000'"
+    "server:start": "nohup node server/index.js & TOHLSERVER_PID=$!",
+    "server:stop": "kill $TOHLSERVER_PID",
+    "server:restart": "npm run server:stop && npm run server:start"
   },
   "repository": {
     "type": "git",
@@ -24,6 +26,7 @@
   "homepage": "https://github.com/dominixdesign/tohl-api#readme",
   "dependencies": {
     "better-sqlite3": "^7.1.5",
+    "express": "^4.17.1",
     "lodash.at": "^4.6.0",
     "lodash.get": "^4.4.2",
     "lodash.isequal": "^4.5.0",
