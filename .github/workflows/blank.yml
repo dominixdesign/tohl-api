@@ -48,10 +48,8 @@ jobs:
           add: 'api'
           message: 'Automatic api update'
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Webhook Action
+        uses: joelwmale/webhook-action@2.1.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./api
-          keep_files: true
-          publish_branch: live-api
+          url: http://webhook.api.my-tohl.org/webhook.php
+          body: 6jqQ3h7-iHNc4yx

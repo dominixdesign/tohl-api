@@ -1,9 +1,9 @@
 # TOHL API
 
 ## design inspiration
-https://dribbble.com/shots/7482817-Liverpool-FC-eCommerce-Concept   
-https://www.tiajasmin.com/wp-content/uploads/2020/01/MiniPlans_Feature.jpg   
-https://dribbble.com/shots/2202572-Kontinental-Hockey-League-Redesign-Concept/attachments/407875?mode=media   
+* https://dribbble.com/shots/7482817-Liverpool-FC-eCommerce-Concept   
+* https://www.tiajasmin.com/wp-content/uploads/2020/01/MiniPlans_Feature.jpg   
+* https://dribbble.com/shots/2202572-Kontinental-Hockey-League-Redesign-Concept/attachments/407875?mode=media   
 
 
 ## workflow
