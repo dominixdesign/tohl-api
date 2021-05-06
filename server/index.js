@@ -3,7 +3,7 @@ const express = require('express')
 const app = express()
 
 app.get('/', (req, res) => {
-  return res.send('Received a GET HTTP method')
+  return res.send('Received a GET HTTP method after the restart')
 })
 
 app.post('/', (req, res) => {
