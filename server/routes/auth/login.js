@@ -29,7 +29,7 @@ router.post('/', (req, res) => {
       username: user.username,
       role: user.role
     })
-    const refreshToken = generateToken.access({
+    const refreshToken = generateToken.refresh({
       username: user.username,
       role: user.role
     })
