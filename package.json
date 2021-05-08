@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "npx nodemon index.js",
-    "server:start": "nohup node server/index.js & TOHLSERVER_PID=$!",
-    "server:stop": "kill $TOHLSERVER_PID",
-    "server:restart": "npm run server:stop && npm run server:start"
+    "start": "npx nodemon server/index.js"
   },
   "repository": {
     "type": "git",
@@ -26,7 +24,10 @@
   "homepage": "https://github.com/dominixdesign/tohl-api#readme",
   "dependencies": {
     "better-sqlite3": "^7.1.5",
+    "body-parser": "^1.19.0",
+    "dotenv": "^9.0.0",
     "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
     "lodash.at": "^4.6.0",
     "lodash.get": "^4.4.2",
     "lodash.isequal": "^4.5.0",
@@ -46,6 +47,7 @@
   "nodemonConfig": {
     "watch": [
       "index",
+      "server",
       "updater"
     ],
     "ext": "js",

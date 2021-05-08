@@ -119,3 +119,6 @@ dist
 import-data/
 upload/
 .run-only
+
+#tohl server
+server/.temp/

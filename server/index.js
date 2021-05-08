@@ -1,8 +1,18 @@
+require('dotenv').config()
+
 const express = require('express')
+const bodyParser = require('body-parser')
+const authMiddleware = require('./middleware/auth')
 
 const app = express()
+app.use(bodyParser.json())
+app.use(require('./routes'))
 
 app.get('/', (req, res) => {
+  return res.send('Received a GET HTTP method after the restart')
+})
+
+app.get('/backend', authMiddleware, (req, res) => {
   return res.send('Received a GET HTTP method after the restart')
 })
 
