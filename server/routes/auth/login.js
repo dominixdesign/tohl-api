@@ -7,28 +7,33 @@ const express = require('express'),
 router.post('/', async (req, res) => {
   const { username, password } = req.body
 
-  const user = await db('manager')
-    .where({
-      mail: username
-    })
-    .first('password', 'username', 'mail')
+  try {
+    const user = await db('manager')
+      .where({
+        mail: username
+      })
+      .first('password', 'username', 'mail')
 
-  if (bcrypt.compareSync(password, user.password)) {
-    const accessToken = generateToken.access({
-      username: user.username,
-      mail: user.mail
-    })
-    const refreshToken = generateToken.refresh({
-      username: user.username,
-      mail: user.mail
-    })
+    if (user && bcrypt.compareSync(password, user.password)) {
+      const accessToken = generateToken.access({
+        username: user.username,
+        mail: user.mail
+      })
+      const refreshToken = generateToken.refresh({
+        username: user.username,
+        mail: user.mail
+      })
 
-    res.json({
-      accessToken,
-      refreshToken
-    })
-  } else {
-    res.send('Username or password incorrect')
+      res.json({
+        accessToken,
+        refreshToken
+      })
+    } else {
+      res.status(403).send('Username or password incorrect')
+    }
+  } catch (e) {
+    res.status(403).send('invalid login data')
+    console.error(e)
   }
 })
 
