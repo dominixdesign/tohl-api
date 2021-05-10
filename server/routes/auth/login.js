@@ -1,37 +1,26 @@
 const express = require('express'),
+  bcrypt = require('bcrypt'),
   router = express.Router(),
-  generateToken = require('../../helpers/generateToken')
+  generateToken = require('../../helpers/generateToken'),
+  db = require('../../helpers/db')
 
-const users = [
-  {
-    username: 'john',
-    password: 'password123admin',
-    role: 'admin'
-  },
-  {
-    username: 'anna',
-    password: 'password123member',
-    role: 'member'
-  }
-]
-
-router.post('/', (req, res) => {
-  // Read username and password from request body
+router.post('/', async (req, res) => {
   const { username, password } = req.body
 
-  // Filter user from the users array by username and password
-  const user = users.find((u) => {
-    return u.username === username && u.password === password
-  })
+  const user = await db('manager')
+    .where({
+      mail: username
+    })
+    .first('password', 'username', 'mail')
 
-  if (user) {
+  if (bcrypt.compareSync(password, user.password)) {
     const accessToken = generateToken.access({
       username: user.username,
-      role: user.role
+      mail: user.mail
     })
     const refreshToken = generateToken.refresh({
       username: user.username,
-      role: user.role
+      mail: user.mail
     })
 
     res.json({

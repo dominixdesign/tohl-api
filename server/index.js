@@ -3,6 +3,8 @@ require('dotenv').config()
 const express = require('express')
 const bodyParser = require('body-parser')
 const authMiddleware = require('./middleware/auth')
+// eslint-disable-next-line no-unused-vars
+const db = require('./helpers/db')
 
 const app = express()
 app.use(bodyParser.json())
