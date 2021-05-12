@@ -1,12 +1,21 @@
 require('dotenv').config()
 
 const express = require('express')
+const { ApolloServer } = require('apollo-server-express')
 const bodyParser = require('body-parser')
 const authMiddleware = require('./middleware/auth')
 // eslint-disable-next-line no-unused-vars
 const db = require('./helpers/db')
 
+const server = new ApolloServer({
+        modules: [
+          require('./graphql/manager'),
+          require('./graphql/player')
+        ]
+})
+
 const app = express()
+server.applyMiddleware({ app })
 app.use(bodyParser.json())
 app.use(require('./routes'))
 

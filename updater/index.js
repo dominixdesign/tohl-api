@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const teams = require('./teams')
 const games = require('./games')
 const playerRosterData = require('./player/rosterData')

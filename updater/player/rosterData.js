@@ -3,7 +3,7 @@ const writePlayer = require('../../lib/filesystem/writePlayer')
 const writeTeamRoster = require('../../lib/filesystem/writeTeamRoster')
 const generatePlayerId = require('../../lib/playerId')
 const detectSeason = require('../../lib/detectSeason')
-const { run } = require('../../db/init')
+const db = require('../../server/helpers/db')
 
 const playerRowPattern = new RegExp(
   [
@@ -31,7 +31,7 @@ const playerRowPattern = new RegExp(
 )
 
 module.exports = {
-  run: (db) => {
+  run: () => {
     const season = detectSeason()
     let rawHtml = loadFHLFile('Rosters')
 
@@ -59,11 +59,19 @@ module.exports = {
             })
 
             const [fname, lname] = name.split(' ', 2)
-            run('INSERT INTO players VALUES ($playerId, $fname, $lname)', {
-              playerId,
+            // insert to db
+            db('player').insert({
+              id: playerId,
               fname: fname.toLowerCase(),
-              lname: lname.toLowerCase()
-            })
+              lname: lname.toLowerCase(),
+              display_fname: fname,
+              display_lname: lname
+            }).onConflict('id').merge('fname','lname').then().catch()
+            db('playerdata').insert({
+              playerid: playerId,
+              season,
+              ...seasonData
+            }).onConflict('playerid','season').merge(Object.keys(seasonData)).then().catch()
           }
         })
       }

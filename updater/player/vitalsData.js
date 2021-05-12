@@ -3,6 +3,7 @@ const writePlayer = require('../../lib/filesystem/writePlayer')
 const writeTeamRoster = require('../../lib/filesystem/writeTeamRoster')
 const generatePlayerId = require('../../lib/playerId')
 const detectSeason = require('../../lib/detectSeason')
+const db = require('../../server/helpers/db')
 
 const playerRowPattern = new RegExp(
   [
@@ -46,6 +47,9 @@ module.exports = {
               weight,
               rookie,
               salary,
+              contract,
+              age,
+              number,
               ...seasonData
             } = playerData.groups
             rookie = rookie === '*' ? true : false
@@ -62,6 +66,25 @@ module.exports = {
             writeTeamRoster(teamId, season, {
               [playerId]: playerData.groups
             })
+            db('player').insert({
+              id: playerId,
+              height,
+              weight,
+            })
+              .onConflict('id').merge(['height', 'weight'])
+              .then().catch(e => console.log(e))
+
+            db('playerdata').insert({
+              playerid: playerId,
+              season,
+              rookie,
+              salary,
+              contract,
+              age,
+              number
+            })
+              .onConflict('playerid','season').merge(['rookie', 'salary', 'number', 'contract', 'age'])
+              .then().catch(e => console.log(e))
           }
         })
       }
