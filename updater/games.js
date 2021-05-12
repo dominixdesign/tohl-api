@@ -53,6 +53,10 @@ module.exports = {
     let gameNumber = 1
     let gameExists = true
 
+    if (gameNumber === 1) {
+      return
+    }
+
     do {
       let rawHtml = loadFHLFile('' + gameNumber)
       if (rawHtml === false) {
@@ -106,15 +110,10 @@ module.exports = {
               // it's a goal!
               // id mapping
               // playernames
-              let [
-                goalscorer,
-                primaryassist,
-                secondaryassist
-              ] = _at(goalData.groups, [
-                'goalscorer',
-                'primaryassist',
-                'secondaryassist'
-              ]).map((p) => p && mapLastNameToPlayer(p.toLowerCase()))
+              let [goalscorer, primaryassist, secondaryassist] = _at(
+                goalData.groups,
+                ['goalscorer', 'primaryassist', 'secondaryassist']
+              ).map((p) => p && mapLastNameToPlayer(p.toLowerCase()))
 
               // time
               const time = {

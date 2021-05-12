@@ -15,7 +15,7 @@ const playerRowPattern = new RegExp(
     '(?<age>[0-9]{2})  ',
     '(?<heightf>[0-9]{1})',
     ' ft ',
-    '(?<heighti>[0-9]{2})  ',
+    '(?<heighti>[0-9 ]{2})  ',
     '(?<weight>[0-9]{3})',
     ' lbs ',
     '(?<salary>[0-9 .]{10})   ',
@@ -25,6 +25,7 @@ const playerRowPattern = new RegExp(
 
 module.exports = {
   run: () => {
+    console.log('###### START VITALS DATA ############')
     const season = detectSeason()
     let rawHtml = loadFHLFile('PlayerVitals')
 
@@ -66,28 +67,38 @@ module.exports = {
             writeTeamRoster(teamId, season, {
               [playerId]: playerData.groups
             })
-            db('player').insert({
-              id: playerId,
-              height,
-              weight,
-            })
-              .onConflict('id').merge(['height', 'weight'])
-              .then().catch(e => console.log(e))
+            if (playerId === 'cedrik_hetterberg') {
+              console.log({ playerId, height, weight })
+            }
+            db('player')
+              .insert({
+                id: playerId,
+                height,
+                weight
+              })
+              .onConflict()
+              .merge(['height', 'weight'])
+              .then()
+              .catch((e) => console.log(e))
 
-            db('playerdata').insert({
-              playerid: playerId,
-              season,
-              rookie,
-              salary,
-              contract,
-              age,
-              number
-            })
-              .onConflict('playerid','season').merge(['rookie', 'salary', 'number', 'contract', 'age'])
-              .then().catch(e => console.log(e))
+            db('playerdata')
+              .insert({
+                playerid: playerId,
+                season,
+                rookie,
+                salary,
+                contract,
+                age,
+                number
+              })
+              .onConflict()
+              .merge(['rookie', 'salary', 'number', 'contract', 'age'])
+              .then()
+              .catch((e) => console.log(e))
           }
         })
       }
     })
+    console.log('###### VITALS DATA DONE ############')
   }
 }

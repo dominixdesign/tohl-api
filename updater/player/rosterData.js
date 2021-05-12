@@ -22,8 +22,8 @@ const playerRowPattern = new RegExp(
     '(?<sk> [0-9]{2})',
     '(?<pa> [0-9]{2})',
     '(?<pc> [0-9]{2})',
-    '(?<df> [0-9]{2})',
-    '(?<sc> [0-9]{2})',
+    '(?<df> [0-9]{2}| NA)',
+    '(?<sc> [0-9]{2}| NA)',
     '(?<ex> [0-9]{2})',
     '(?<ld> [0-9]{2})',
     '(?<ov> [0-9]{2})'
@@ -32,9 +32,9 @@ const playerRowPattern = new RegExp(
 
 module.exports = {
   run: () => {
+    console.log('###### START ROSTER DATA ############')
     const season = detectSeason()
     let rawHtml = loadFHLFile('Rosters')
-
     const teams = rawHtml.split('<H2>')
     teams.map((html) => {
       let teamnameRegex = html.match(/>([A-Z]{1,20})</)
@@ -57,24 +57,36 @@ module.exports = {
             writeTeamRoster(teamId, season, {
               [playerId]: playerData.groups
             })
-
             const [fname, lname] = name.split(' ', 2)
             // insert to db
-            db('player').insert({
-              id: playerId,
-              fname: fname.toLowerCase(),
-              lname: lname.toLowerCase(),
-              display_fname: fname,
-              display_lname: lname
-            }).onConflict('id').merge('fname','lname').then().catch()
-            db('playerdata').insert({
-              playerid: playerId,
-              season,
-              ...seasonData
-            }).onConflict('playerid','season').merge(Object.keys(seasonData)).then().catch()
+            db('player')
+              .insert({
+                id: playerId,
+                fname: fname.toLowerCase(),
+                lname: lname.toLowerCase(),
+                display_fname: fname,
+                display_lname: lname,
+                hand
+              })
+              .onConflict()
+              .merge(['fname', 'lname', 'hand'])
+              .then()
+              .catch()
+
+            db('playerdata')
+              .insert({
+                playerid: playerId,
+                season,
+                ...seasonData
+              })
+              .onConflict()
+              .merge(Object.keys(seasonData))
+              .then()
+              .catch()
           }
         })
       }
     })
+    console.log('###### ROSTER DATA DONE ############')
   }
 }
