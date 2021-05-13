@@ -1,5 +1,4 @@
 const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
-const writePlayer = require('../../lib/filesystem/writePlayer')
 const writeTeamRoster = require('../../lib/filesystem/writeTeamRoster')
 const generatePlayerId = require('../../lib/playerId')
 const detectSeason = require('../../lib/detectSeason')
@@ -49,11 +48,6 @@ module.exports = {
             }
             const { name, hand, ...seasonData } = playerData.groups
             const playerId = generatePlayerId(playerData.groups.name)
-            writePlayer(playerData.groups.name, {
-              name,
-              hand,
-              [season]: seasonData
-            })
             writeTeamRoster(teamId, season, {
               [playerId]: playerData.groups
             })
@@ -77,10 +71,11 @@ module.exports = {
               .insert({
                 playerid: playerId,
                 season,
+                teamid: teamId,
                 ...seasonData
               })
               .onConflict()
-              .merge(Object.keys(seasonData))
+              .merge([...Object.keys(seasonData), 'teamid'])
               .then()
               .catch()
           }

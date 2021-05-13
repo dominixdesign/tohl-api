@@ -1,5 +1,6 @@
 const loadFHLFile = require('../lib/filesystem/loadFHLFile')
-const { run } = require('../db/init')
+const detectSeason = require('../lib/detectSeason')
+const db = require('../server/helpers/db')
 
 module.exports = {
   run: () => {
@@ -13,10 +14,17 @@ module.exports = {
         teamname = teamnameRegex[1]
         const teamIdRegex = html.match(`${teamname} Totals +(?<id>[A-Z]{2,3})`)
         if (teamIdRegex) {
-          run('INSERT INTO teams VALUES ($teamname, $teamId)', {
-            teamname,
-            teamId: teamIdRegex.groups.id
-          })
+          // insert to db
+          db('team')
+            .insert({
+              teamid: teamIdRegex.groups.id.toLowerCase(),
+              season: detectSeason(),
+              teamsim: teamname.toLowerCase()
+            })
+            .onConflict()
+            .merge(['teamsim'])
+            .then()
+            .catch((e) => console.log(e))
         }
       }
     })
