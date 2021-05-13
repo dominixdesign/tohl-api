@@ -4,14 +4,22 @@ const express = require('express')
 const { ApolloServer } = require('apollo-server-express')
 const bodyParser = require('body-parser')
 const authMiddleware = require('./middleware/auth')
+const jwt = require('jsonwebtoken')
 // eslint-disable-next-line no-unused-vars
 const db = require('./helpers/db')
 
 const server = new ApolloServer({
-        modules: [
-          require('./graphql/manager'),
-          require('./graphql/player')
-        ]
+  modules: [require('./graphql/manager'), require('./graphql/player')],
+  context: ({ req, res }) => {
+    const authHeader = req.headers.authorization
+    let user = {}
+
+    if (authHeader) {
+      const token = authHeader.split(' ')[1]
+      user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+    }
+    return { user }
+  }
 })
 
 const app = express()
