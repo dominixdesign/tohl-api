@@ -9,8 +9,12 @@ const jwt = require('jsonwebtoken')
 const db = require('./helpers/db')
 
 const server = new ApolloServer({
-  modules: [require('./graphql/manager'), require('./graphql/player')],
-  context: ({ req, res }) => {
+  modules: [
+    require('./graphql/manager'),
+    require('./graphql/team'),
+    require('./graphql/player')
+  ],
+  context: ({ req }) => {
     const authHeader = req.headers.authorization
     let user = {}
 
