@@ -2,25 +2,44 @@ require('dotenv').config()
 
 const express = require('express')
 const { ApolloServer } = require('apollo-server-express')
+const { makeExecutableSchema } = require('@graphql-tools/schema')
 const bodyParser = require('body-parser')
 const authMiddleware = require('./middleware/auth')
 const jwt = require('jsonwebtoken')
+const AuhtDirective = require('./middleware/authDirective')
 // eslint-disable-next-line no-unused-vars
 const db = require('./helpers/db')
 
+// modules
+const modules = ['global', 'manager', 'team', 'player']
+let _typeDefs = []
+let _resolvers = []
+modules.forEach((module) => {
+  const { typeDefs, resolvers } = require(`./graphql/${module}`)
+  _typeDefs.push(typeDefs)
+  _resolvers.push(resolvers)
+})
+
 const server = new ApolloServer({
-  modules: [
-    require('./graphql/manager'),
-    require('./graphql/team'),
-    require('./graphql/player')
-  ],
+  schema: makeExecutableSchema({
+    typeDefs: _typeDefs,
+    resolvers: _resolvers,
+    schemaDirectives: {
+      auth: AuhtDirective
+    }
+  }),
   context: ({ req }) => {
     const authHeader = req.headers.authorization
     let user = {}
 
     if (authHeader) {
-      const token = authHeader.split(' ')[1]
-      user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+      try {
+        const token = authHeader.split(' ')[1]
+        user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+      } catch (e) {
+        console.log(e)
+        user = {}
+      }
     }
     return { user }
   }

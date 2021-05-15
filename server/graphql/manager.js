@@ -10,9 +10,10 @@ module.exports = {
     type Manager {
       id: Int!
       username: String
-      mail: String
-      roles: String
+      mail: String @auth(requires: GM)
+      roles: String @auth(requires: ADMIN)
     }
+
     extend type Query {
       currentManager: Manager
       managers: [Manager]

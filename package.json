@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/dominixdesign/tohl-api#readme",
   "dependencies": {
+    "@graphql-tools/schema": "^7.1.5",
     "apollo-server-express": "^2.24.0",
     "bcrypt": "^5.0.1",
     "better-sqlite3": "^7.1.5",
