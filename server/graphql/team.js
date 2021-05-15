@@ -1,5 +1,6 @@
 const { gql } = require('apollo-server-express')
 const db = require('../helpers/db')
+const managerLoader = require('../helpers/loaders/managerLoader')
 
 module.exports = {
   typeDefs: gql`
@@ -21,7 +22,7 @@ module.exports = {
   `,
   resolvers: {
     Team: {
-      manager: (parent) => db('manager').where('id', parent.manager).first()
+      manager: (parent) => managerLoader.load(parent.manager)
     },
     Query: {
       teams: async () => db('team').select(),
