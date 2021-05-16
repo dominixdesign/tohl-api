@@ -23,6 +23,7 @@ module.exports = {
 
     extend type Mutation {
       updateUserdata(username: String, mail: String): Manager
+        @auth(requires: GM)
     }
   `,
   resolvers: {
