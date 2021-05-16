@@ -13,6 +13,10 @@ module.exports = {
     type Query {
       roles: [Role]
     }
+
+    type Mutation {
+      roles: Role
+    }
   `,
   resolvers: {}
 }

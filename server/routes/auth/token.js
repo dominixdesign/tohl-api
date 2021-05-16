@@ -22,7 +22,9 @@ router.post('/', (req, res) => {
 
     const accessToken = generateToken.access({
       username: user.username,
-      role: user.role
+      roles: user.roles,
+      mail: user.mail,
+      userid: user.userid
     })
 
     res.json({

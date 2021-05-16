@@ -1,4 +1,4 @@
-const { gql } = require('apollo-server-express')
+const { gql, UserInputError } = require('apollo-server-express')
 const db = require('../helpers/db')
 
 module.exports = {
@@ -20,6 +20,10 @@ module.exports = {
       findManagers(filter: ManagerInput): [Manager]
       manager(id: ID!): Manager
     }
+
+    extend type Mutation {
+      updateUserdata(username: String, mail: String): Manager
+    }
   `,
   resolvers: {
     Query: {
@@ -31,6 +35,19 @@ module.exports = {
       findManagers: async (_, args) =>
         db('manager').where(args.filter).select(),
       manager: async (_, args) => db('manager').where('id', args.id).first()
+    },
+    Mutation: {
+      updateUserdata: async (_, { username, mail }, { user }) => {
+        const re = /\S+@\S+\.\S+/
+        if (!re.test(mail)) {
+          throw new UserInputError('Invalid email address')
+        }
+        await db('manager').where('id', user.userid).update({
+          username,
+          mail
+        })
+        return await db('manager').where('id', user.userid).select()
+      }
     }
   }
 }

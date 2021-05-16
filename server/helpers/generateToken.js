@@ -2,18 +2,18 @@ const jwt = require('jsonwebtoken'),
   refreshTokenHandler = require('./refreshTokenHandler')
 
 module.exports = {
-  access: ({ username, roles, mail }) => {
+  access: ({ username, roles, mail, userid }) => {
     return jwt.sign(
-      { username, roles, mail },
+      { username, roles, mail, userid },
       process.env.ACCESS_TOKEN_SECRET,
       {
         expiresIn: '48h'
       }
     )
   },
-  refresh: ({ username, roles, mail }) => {
+  refresh: ({ username, roles, mail, userid }) => {
     const refreshToken = jwt.sign(
-      { username, roles, mail },
+      { username, roles, mail, userid },
       process.env.REFRESH_TOKEN_SECRET
     )
     refreshTokenHandler.add(refreshToken)

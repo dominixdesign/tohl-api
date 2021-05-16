@@ -35,9 +35,11 @@ const server = new ApolloServer({
     if (authHeader) {
       try {
         const token = authHeader.split(' ')[1]
-        user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        if (token) {
+          user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        }
       } catch (e) {
-        console.log(e)
+        console.log('JWT ERROR', e)
         user = {}
       }
     }

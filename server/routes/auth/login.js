@@ -12,18 +12,20 @@ router.post('/', async (req, res) => {
       .where({
         mail: username
       })
-      .first('password', 'username', 'mail', 'roles')
+      .first('password', 'username', 'mail', 'roles', 'id')
 
     if (user && bcrypt.compareSync(password, user.password)) {
       const accessToken = generateToken.access({
         username: user.username,
         mail: user.mail,
-        roles: user.roles.split(',') || null
+        roles: user.roles.split(',') || null,
+        userid: user.id
       })
       const refreshToken = generateToken.refresh({
         username: user.username,
         mail: user.mail,
-        roles: user.roles.split(',') || null
+        roles: user.roles.split(',') || null,
+        userid: user.id
       })
 
       res.json({
