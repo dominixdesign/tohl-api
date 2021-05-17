@@ -7,7 +7,6 @@ const bodyParser = require('body-parser')
 const authMiddleware = require('./middleware/auth')
 const jwt = require('jsonwebtoken')
 const AuhtDirective = require('./middleware/authDirective')
-// eslint-disable-next-line no-unused-vars
 const db = require('./helpers/db')
 
 // modules
@@ -28,7 +27,7 @@ const server = new ApolloServer({
       auth: AuhtDirective
     }
   }),
-  context: ({ req }) => {
+  context: async ({ req }) => {
     const authHeader = req.headers.authorization
     let user = {}
 
@@ -43,7 +42,16 @@ const server = new ApolloServer({
         user = {}
       }
     }
-    return { user }
+
+    let validTeams = []
+    if (user) {
+      // add team ids
+      validTeams = await db('manager_x_team')
+        .select('teamid')
+        .where('managerid', user.userid)
+        .whereRaw('valid_from < now() and valid_to > now()')
+    }
+    return { user, validTeams }
   }
 })
 

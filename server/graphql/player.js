@@ -3,24 +3,23 @@ const db = require('../helpers/db')
 
 module.exports = {
   typeDefs: gql`
-input PlayerFilter {
-    fname: String,
-    lname: String
-}
-type Player {
-    id: String!,
-    fname: String,
-    lname: String,
-    display_fname: String,
-    display_lname: String
-}
-extend type Query {
-  players: [Player]
-  findPlayers(filter: PlayerFilter): [Player]
-  player(id: ID!): Player
-}
-
-`,
+    input PlayerFilter {
+      fname: String
+      lname: String
+    }
+    type Player {
+      id: String!
+      fname: String
+      lname: String
+      display_fname: String
+      display_lname: String
+    }
+    extend type Query {
+      players: [Player]
+      findPlayers(filter: PlayerFilter): [Player]
+      player(id: ID!): Player
+    }
+  `,
   resolvers: {
     Query: {
       players: async () => db('player').select(),

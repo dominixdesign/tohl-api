@@ -1,5 +1,6 @@
 const { gql, UserInputError } = require('apollo-server-express')
 const db = require('../helpers/db')
+const { team } = require('../helpers/dataLoaders')
 
 module.exports = {
   typeDefs: gql`
@@ -12,6 +13,7 @@ module.exports = {
       username: String
       mail: String @auth(requires: GM)
       roles: String @auth(requires: ADMIN)
+      teams: [Team]
     }
 
     extend type Query {
@@ -27,6 +29,15 @@ module.exports = {
     }
   `,
   resolvers: {
+    Manager: {
+      teams: async (parent) => {
+        const teams = await db('manager_x_team')
+          .select('teamid')
+          .where('managerid', parent.id)
+          .whereRaw('valid_from < now() and valid_to > now()')
+        return team.loadMany(teams.map((t) => t.teamid))
+      }
+    },
     Query: {
       currentManager: async (_parent, _args, { user }) => {
         if (!user.mail) return null
