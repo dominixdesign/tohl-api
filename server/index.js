@@ -7,6 +7,7 @@ const bodyParser = require('body-parser')
 const authMiddleware = require('./middleware/auth')
 const jwt = require('jsonwebtoken')
 const AuhtDirective = require('./middleware/authDirective')
+const TeamDirective = require('./middleware/teamDirective')
 const db = require('./helpers/db')
 
 // modules
@@ -24,7 +25,8 @@ const server = new ApolloServer({
     typeDefs: _typeDefs,
     resolvers: _resolvers,
     schemaDirectives: {
-      auth: AuhtDirective
+      auth: AuhtDirective,
+      ownTeam: TeamDirective
     }
   }),
   context: async ({ req }) => {
@@ -51,7 +53,7 @@ const server = new ApolloServer({
         .where('managerid', user.userid)
         .whereRaw('valid_from < now() and valid_to > now()')
     }
-    return { user, validTeams }
+    return { user, validTeams: validTeams.map((t) => t.teamid) }
   }
 })
 
