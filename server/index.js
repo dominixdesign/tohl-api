@@ -51,7 +51,8 @@ const server = new ApolloServer({
       validTeams = await db('manager_x_team')
         .select('teamid')
         .where('managerid', user.userid)
-        .whereRaw('valid_from < now() and valid_to > now()')
+        .whereRaw('`valid_from` < now() and `valid_to` > now()')
+        .orderByRaw('(`valid_to` - `valid_from`) desc')
     }
     return { user, validTeams: validTeams.map((t) => t.teamid) }
   }
