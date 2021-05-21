@@ -13,6 +13,9 @@ module.exports = {
       lname: String
       display_fname: String
       display_lname: String
+      height: Int
+      weight: Int
+      hand: String
     }
     extend type Query {
       players: [Player]
