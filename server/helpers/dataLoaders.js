@@ -15,5 +15,12 @@ module.exports = {
       .whereIn('teamid', ids)
       .select()
       .then((rows) => ids.map((id) => rows.find((x) => x.teamid === id)))
+  ),
+  player: new DataLoader((ids) =>
+    db
+      .table('player')
+      .whereIn('id', ids)
+      .select()
+      .then((rows) => ids.map((id) => rows.find((x) => x.id === id)))
   )
 }

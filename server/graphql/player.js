@@ -45,6 +45,7 @@ module.exports = {
       weight: Int
       hand: String
       data: [Playerdata]
+      seasondata(season: ID): Playerdata
     }
     extend type Query {
       players: [Player]
@@ -54,7 +55,12 @@ module.exports = {
   `,
   resolvers: {
     Player: {
-      data: (parent) => db('playerdata').where('playerid', parent.id).select()
+      data: (parent) => db('playerdata').where('playerid', parent.id).select(),
+      seasondata: (parent, { season }) =>
+        db('playerdata')
+          .where('playerid', parent.id)
+          .where('season', season)
+          .first()
     },
     Query: {
       players: async () => db('player').select(),

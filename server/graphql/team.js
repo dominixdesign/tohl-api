@@ -1,6 +1,6 @@
 const { gql } = require('apollo-server-express')
 const db = require('../helpers/db')
-const { manager } = require('../helpers/dataLoaders')
+const { manager, player } = require('../helpers/dataLoaders')
 
 module.exports = {
   typeDefs: gql`
@@ -14,6 +14,7 @@ module.exports = {
       teamsim: String
       manager: Manager
       full_name: String
+      roster(season: ID!): [Player]
     }
     extend type Query {
       teams: [Team]
@@ -27,7 +28,15 @@ module.exports = {
   `,
   resolvers: {
     Team: {
-      manager: (parent) => manager.load(parent.manager)
+      manager: (parent) => manager.load(parent.manager),
+      roster: async (parent, { season }) =>
+        player.loadMany(
+          await db('playerdata')
+            .where('teamid', parent.teamsim)
+            .where('season', season)
+            .select('playerid')
+            .then((rows) => rows.map((r) => r.playerid))
+        )
     },
     Query: {
       teams: async () => db('team').select(),
