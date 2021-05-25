@@ -1,6 +1,6 @@
 const { gql, UserInputError } = require('apollo-server-express')
 const db = require('../helpers/db')
-const { team } = require('../helpers/dataLoaders')
+const { manager, team } = require('../helpers/dataLoaders')
 
 module.exports = {
   typeDefs: gql`
@@ -16,16 +16,31 @@ module.exports = {
       teams: [Team]
     }
 
+    type Managerterm {
+      manager: Manager
+      team: Team
+      valid_from: Date
+      valid_to: Date
+      type: String
+    }
+
     extend type Query {
       currentManager: Manager
       managers: [Manager]
       findManagers(filter: ManagerInput): [Manager]
       manager(id: ID!): Manager
+      myTerms: [Managerterm]
     }
 
     extend type Mutation {
       updateUserdata(username: String, mail: String): Manager
         @auth(requires: GM)
+      addReplacement(
+        userid: ID!
+        teamid: ID!
+        valid_from: Date!
+        valid_to: Date!
+      ): String @auth(requires: ADMIN) @ownTeam
     }
   `,
   resolvers: {
@@ -38,6 +53,10 @@ module.exports = {
         return team.loadMany(teams.map((t) => t.teamid))
       }
     },
+    Managerterm: {
+      manager: (parent) => manager.load(parent.managerid),
+      team: (parent) => team.load(parent.teamid)
+    },
     Query: {
       currentManager: async (_parent, _args, { user }) => {
         if (!user.mail) return null
@@ -46,9 +65,24 @@ module.exports = {
       managers: async () => db('manager').select(),
       findManagers: async (_, args) =>
         db('manager').where(args.filter).select(),
-      manager: async (_, args) => db('manager').where('id', args.id).first()
+      manager: async (_, args) => db('manager').where('id', args.id).first(),
+      myTerms: async (_, _args, { user }) =>
+        db('manager_x_team').where('managerid', user.userid).select()
     },
     Mutation: {
+      addReplacement: async (_, { userid, valid_from, valid_to, teamid }) => {
+        try {
+          await db('manager_x_team').insert({
+            managerid: userid,
+            teamid,
+            valid_from,
+            valid_to
+          })
+          return 'OK'
+        } catch (e) {
+          return e.code
+        }
+      },
       updateUserdata: async (_, { username, mail }, { user }) => {
         const re = /\S+@\S+\.\S+/
         if (!re.test(mail)) {

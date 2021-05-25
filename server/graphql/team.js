@@ -21,6 +21,7 @@ module.exports = {
       findTeams(filter: TeamFilter): [Team]
       team(teamid: ID!): Team
       myTeam: Team
+      teamterms: [Managerterm]
     }
     extend type Mutation {
       updateTeam(teamid: String, full_name: String): Team @ownTeam
@@ -42,8 +43,10 @@ module.exports = {
       teams: async () => db('team').select(),
       findTeams: async (_, args) => db('team').where(args.filter).select(),
       team: async (_, args) => db('team').where('teamid', args.teamid).select(),
-      myTeam: async (_, _args, { validTeams }) =>
-        db('team').where('teamid', validTeams[0]).first()
+      myTeam: async (_, _args, { ownTeam }) =>
+        db('team').where('teamid', ownTeam).first(),
+      teamterms: async (_, _args, { ownTeam }) =>
+        db('manager_x_team').where('teamid', ownTeam).select()
     },
     Mutation: {
       updateTeam: async (_, { teamid, full_name }) => {

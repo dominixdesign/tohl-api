@@ -7,7 +7,8 @@ const bodyParser = require('body-parser')
 const authMiddleware = require('./middleware/auth')
 const jwt = require('jsonwebtoken')
 const AuhtDirective = require('./middleware/authDirective')
-const TeamDirective = require('./middleware/teamDirective')
+const ownTeamDirective = require('./middleware/ownTeamDirective')
+const managedTeamDirective = require('./middleware/managedTeamDirective')
 const db = require('./helpers/db')
 
 // modules
@@ -26,13 +27,13 @@ const server = new ApolloServer({
     resolvers: _resolvers,
     schemaDirectives: {
       auth: AuhtDirective,
-      ownTeam: TeamDirective
+      ownTeam: ownTeamDirective,
+      managedTeam: managedTeamDirective
     }
   }),
   context: async ({ req }) => {
     const authHeader = req.headers.authorization
     let user = {}
-
     if (authHeader) {
       try {
         const token = authHeader.split(' ')[1]
@@ -46,15 +47,22 @@ const server = new ApolloServer({
     }
 
     let validTeams = []
-    if (user) {
+    if (user.userid) {
       // add team ids
       validTeams = await db('manager_x_team')
-        .select('teamid')
+        .select('teamid', 'type')
         .where('managerid', user.userid)
         .whereRaw('`valid_from` < now() and `valid_to` > now()')
         .orderByRaw('(`valid_to` - `valid_from`) desc')
     }
-    return { user, validTeams: validTeams.map((t) => t.teamid) }
+    return {
+      user,
+      ownTeam: validTeams
+        .filter((t) => t.type === 'OWNER')
+        .map((t) => t.teamid)
+        .join(),
+      validTeams: validTeams.map((t) => t.teamid)
+    }
   }
 })
 
