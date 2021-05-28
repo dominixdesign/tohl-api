@@ -1,5 +1,4 @@
 const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
-const writeTeamRoster = require('../../lib/filesystem/writeTeamRoster')
 const generatePlayerId = require('../../lib/playerId')
 const detectSeason = require('../../lib/detectSeason')
 const db = require('../../server/helpers/db')
@@ -48,9 +47,6 @@ module.exports = {
             }
             const { name, hand, ...seasonData } = playerData.groups
             const playerId = generatePlayerId(playerData.groups.name)
-            writeTeamRoster(teamId, season, {
-              [playerId]: playerData.groups
-            })
             const [fname, lname] = name.split(' ', 2)
             // insert to db
             db('player')

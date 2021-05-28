@@ -4,8 +4,7 @@ const xpath = require('xpath'),
   loadFHLFile = require('../lib/filesystem/loadFHLFile'),
   detectSeason = require('../lib/detectSeason'),
   parseScoreTable = require('./games/parseScoreTable'),
-  writePlayer = require('../lib/filesystem/writePlayer'),
-  { all } = require('../db/init')
+  db = require('../server/helpers/db')
 
 const goalRowPattern = new RegExp(
   [
@@ -37,25 +36,34 @@ const penaltiesRowPattern = new RegExp(
   'gm'
 )
 
-const mapLastNameToPlayer = (lastname) => {
-  const rows = all('SELECT player_id FROM players WHERE lastname = $lastname', {
-    lastname
-  })
-  if (rows.length === 1) {
-    return rows[0].player_id
-  } else {
-    return lastname
-  }
-}
+const lastNameToPlayer = {}
 
 module.exports = {
-  run: () => {
+  run: async () => {
+    console.log('###### START GAMES ############')
+    if (Object.keys(lastNameToPlayer).length === 0) {
+      const dbData = await db('player').select('id', 'lname').then().catch()
+
+      dbData.forEach((r) => {
+        const name = r.lname.toLowerCase()
+        if (!lastNameToPlayer[name]) {
+          lastNameToPlayer[name] = []
+        }
+        lastNameToPlayer[name].push(r.id)
+      })
+    }
+
+    const mapLastNameToPlayer = (lastname) => {
+      const rows = lastNameToPlayer[lastname.toLowerCase()]
+      if (rows && rows.length === 1) {
+        return rows[0]
+      } else {
+        return lastname
+      }
+    }
+    const season = detectSeason()
     let gameNumber = 1
     let gameExists = true
-
-    if (gameNumber === 1) {
-      return
-    }
 
     do {
       let rawHtml = loadFHLFile('' + gameNumber)
@@ -100,7 +108,7 @@ module.exports = {
             [away]: 0
           }
         // go through periods
-        htmlParts[1].split('<BR>').forEach((entry) => {
+        htmlParts[1].split('<BR>').forEach(async (entry) => {
           const periodSwitch = entry.match(/<B>(Period [123]|Overtime)<\/B>/)
           if (periodSwitch) {
             period++
@@ -123,6 +131,8 @@ module.exports = {
 
               // score
               score[goalData.groups.team.toLowerCase()]++
+              const concedingteam =
+                goalData.groups.team.toLowerCase() === home ? away : home
 
               // situation
               const situation = goalData.groups.pp
@@ -131,49 +141,37 @@ module.exports = {
                 ? 'sh'
                 : null
 
-              const goalId = `${gameNumber}-${time.min}-${time.sec}`
+              const tags = []
+
+              const goalId = `${season}-${gameNumber}-${time.min}-${time.sec}`
+
               const goal = {
+                id: goalId,
+                season,
+                game: gameNumber,
                 goalscorer,
                 primaryassist,
                 secondaryassist,
-                score,
+                score: `${score[home]}:${score[away]}`,
+                scoringteam: goalData.groups.team.toLowerCase(),
+                concedingteam,
                 period,
-                time,
-                situation
+                minutes: time['min'],
+                seconds: time['sec'],
+                situation,
+                tags: tags.join(',')
               }
-
-              gamedata.goals.push(goal)
-
-              // write players
-              if (goalscorer.includes('_')) {
-                writePlayer(
-                  goalscorer,
-                  { [goalId]: goal },
-                  detectSeason(),
-                  'goals'
-                )
-              }
-              if (primaryassist.includes('_')) {
-                writePlayer(
-                  primaryassist,
-                  { [goalId]: goal },
-                  detectSeason(),
-                  'assists'
-                )
-              }
-              if (secondaryassist && secondaryassist.includes('_')) {
-                writePlayer(
-                  secondaryassist,
-                  { [goalId]: goal },
-                  detectSeason(),
-                  'assists'
-                )
-              }
+              await db('goal')
+                .insert(goal)
+                .onConflict()
+                .ignore()
+                .then()
+                .catch((e) => console.log(e))
             }
 
             let myArray
             while ((myArray = penaltiesRowPattern.exec(entry)) !== null) {
-              console.log(myArray.groups)
+              // console.log('pen', myArray.groups)
             }
           }
         })
@@ -182,5 +180,6 @@ module.exports = {
         gameNumber = gameNumber + 100
       }
     } while (gameExists)
+    console.log('###### END GAMES ############')
   }
 }
