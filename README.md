@@ -8,10 +8,9 @@
 
 ## workflow
 
-* Upload of FHLSim export on TOHL page triggers `repository_dispatch` action.
-* `repository_dispatch` triggers gitlab build action
-* build action loads zip file from TOHL page and extracts it
-* update api data from FHLSim export.
+* `tohl-api` is automatically deployed on TOHL website
+* uploading a new export zip file triggers update process
+* update process updates database
 
 ## player ids
 
@@ -20,8 +19,74 @@ Player ID is just `firstname_lastname` in all lowercase. e.g. 'ryan_damyt'
 ## endpoints
 
 ### player
-`/api/p/<id>` --> Player Details
-`/api/p/<id>/trades` --> Player Trade
+```
+query {
+  player(id: ID!) {
+    id
+    fname
+    lname
+    display_fname
+    display_lname
+    height
+    weight
+    hand
+    data: {
+      items {
+        season
+        team
+        number
+        pos
+        cd
+        ij
+        it
+        sp
+        st
+        en
+        du
+        di
+        sk
+        pa
+        pc
+        df
+        sc
+        ex
+        ld
+        ov
+        rookie
+        age
+        salary
+        contract
+      }
+    }
+    seasondata(season: ID): {
+        season
+        team
+        number
+        pos
+        cd
+        ij
+        it
+        sp
+        st
+        en
+        du
+        di
+        sk
+        pa
+        pc
+        df
+        sc
+        ex
+        ld
+        ov
+        rookie
+        age
+        salary
+        contract
+    }
+  }
+}
+```
 
 #### player and season
 `/api/p/<id>/<seasonid>/gamelogs.json` --> Player Gamelogs
