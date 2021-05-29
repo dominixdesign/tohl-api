@@ -4,7 +4,8 @@ const xpath = require('xpath'),
   loadFHLFile = require('../lib/filesystem/loadFHLFile'),
   detectSeason = require('../lib/detectSeason'),
   parseScoreTable = require('./games/parseScoreTable'),
-  db = require('../server/helpers/db')
+  db = require('../server/helpers/db'),
+  log = require('../server/helpers/logger')
 
 const goalRowPattern = new RegExp(
   [
@@ -40,7 +41,7 @@ const lastNameToPlayer = {}
 
 module.exports = {
   run: async () => {
-    console.log('###### START GAMES ############')
+    log('###### START GAMES ############')
     if (Object.keys(lastNameToPlayer).length === 0) {
       const dbData = await db('player').select('id', 'lname').then().catch()
 
@@ -52,7 +53,6 @@ module.exports = {
         lastNameToPlayer[name].push(r.id)
       })
     }
-
     const mapLastNameToPlayer = (lastname) => {
       const rows = lastNameToPlayer[lastname.toLowerCase()]
       if (rows && rows.length === 1) {
@@ -61,11 +61,15 @@ module.exports = {
         return lastname
       }
     }
+
     const season = detectSeason()
+    log('###### INIT GAMES ############')
     let gameNumber = 1
     let gameExists = true
 
     do {
+      const insertGoals = []
+
       let rawHtml = loadFHLFile('' + gameNumber)
       if (rawHtml === false) {
         gameExists = false
@@ -98,6 +102,8 @@ module.exports = {
         // split HTML in four parts (INtro, Scoring, Team1, Team2 + Farm)
         const htmlParts = rawHtml.split('<BR><BR>')
 
+        console.log(htmlParts[2])
+
         gamedata.goals = []
         gamedata.penalties = []
 
@@ -118,6 +124,7 @@ module.exports = {
               // it's a goal!
               // id mapping
               // playernames
+              const tags = []
               let [goalscorer, primaryassist, secondaryassist] = _at(
                 goalData.groups,
                 ['goalscorer', 'primaryassist', 'secondaryassist']
@@ -141,11 +148,23 @@ module.exports = {
                 ? 'sh'
                 : null
 
-              const tags = []
+              if (goalData.groups.team.toLowerCase() === home) {
+                tags.push('home')
+              } else {
+                tags.push('away')
+              }
+
+              if (score[home] === score[away]) {
+                tags.push('tying')
+              }
+
+              if (score[concedingteam] === 0) {
+                tags.push('first')
+              }
 
               const goalId = `${season}-${gameNumber}-${time.min}-${time.sec}`
 
-              const goal = {
+              insertGoals.push({
                 id: goalId,
                 season,
                 game: gameNumber,
@@ -160,19 +179,20 @@ module.exports = {
                 seconds: time['sec'],
                 situation,
                 tags: tags.join(',')
-              }
-              await db('goal')
-                .insert(goal)
-                .onConflict()
-                .ignore()
-                .then()
-                .catch((e) => console.log(e))
+              })
             }
 
-            let myArray
-            while ((myArray = penaltiesRowPattern.exec(entry)) !== null) {
-              // console.log('pen', myArray.groups)
-            }
+            await db('goal')
+              .insert(insertGoals)
+              .onConflict()
+              .ignore()
+              .then()
+              .catch((e) => console.log(e))
+
+            //let myArray
+            //while ((myArray = penaltiesRowPattern.exec(entry)) !== null) {
+            //  console.log('pen', myArray.groups)
+            //}
           }
         })
 
@@ -180,6 +200,6 @@ module.exports = {
         gameNumber = gameNumber + 100
       }
     } while (gameExists)
-    console.log('###### END GAMES ############')
+    log('###### END GAMES ############')
   }
 }

@@ -2,6 +2,7 @@ const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
 const generatePlayerId = require('../../lib/playerId')
 const detectSeason = require('../../lib/detectSeason')
 const db = require('../../server/helpers/db')
+const log = require('../../server/helpers/logger')
 
 const playerRowPattern = new RegExp(
   [
@@ -29,12 +30,17 @@ const playerRowPattern = new RegExp(
 )
 
 module.exports = {
-  run: () => {
-    console.log('###### START ROSTER DATA ############')
+  run: async () => {
+    log('###### START ROSTER DATA ############')
+
+    const insertsPlayer = []
+    const insertsPlayerdata = []
+    let mergeFields = []
+
     const season = detectSeason()
     let rawHtml = loadFHLFile('Rosters')
     const teams = rawHtml.split('<H2>')
-    teams.map((html) => {
+    teams.forEach(async (html) => {
       let teamnameRegex = html.match(/>([A-Z]{1,20})</)
       if (teamnameRegex) {
         const teamId = teamnameRegex[1].toLowerCase()
@@ -49,35 +55,42 @@ module.exports = {
             const playerId = generatePlayerId(playerData.groups.name)
             const [fname, lname] = name.split(' ', 2)
             // insert to db
-            db('player')
-              .insert({
-                id: playerId,
-                fname: fname.toLowerCase(),
-                lname: lname.toLowerCase(),
-                display_fname: fname,
-                display_lname: lname,
-                hand
-              })
-              .onConflict()
-              .merge(['fname', 'lname', 'hand'])
-              .then()
-              .catch()
-
-            db('playerdata')
-              .insert({
-                playerid: playerId,
-                season,
-                teamid: teamId,
-                ...seasonData
-              })
-              .onConflict()
-              .merge([...Object.keys(seasonData), 'teamid'])
-              .then()
-              .catch()
+            insertsPlayer.push({
+              id: playerId,
+              fname: fname.toLowerCase(),
+              lname: lname.toLowerCase(),
+              display_fname: fname,
+              display_lname: lname,
+              hand
+            })
+            insertsPlayerdata.push({
+              playerid: playerId,
+              season,
+              teamid: teamId,
+              ...seasonData
+            })
+            mergeFields = [...Object.keys(seasonData), 'teamid']
           }
         })
       }
+
+      if (insertsPlayer.length > 0) {
+        await db('player')
+          .insert(insertsPlayer)
+          .onConflict()
+          .merge(['fname', 'lname', 'hand'])
+          .then()
+          .catch()
+      }
+      if (insertsPlayerdata.length > 0) {
+        await db('playerdata')
+          .insert(insertsPlayerdata)
+          .onConflict()
+          .merge(mergeFields)
+          .then()
+          .catch()
+      }
     })
-    console.log('###### ROSTER DATA DONE ############')
+    log('###### ROSTER DATA DONE ############')
   }
 }

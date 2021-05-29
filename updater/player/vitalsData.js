@@ -2,6 +2,7 @@ const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
 const generatePlayerId = require('../../lib/playerId')
 const detectSeason = require('../../lib/detectSeason')
 const db = require('../../server/helpers/db')
+const log = require('../../server/helpers/logger')
 
 const playerRowPattern = new RegExp(
   [
@@ -22,10 +23,13 @@ const playerRowPattern = new RegExp(
 )
 
 module.exports = {
-  run: () => {
-    console.log('###### START VITALS DATA ############')
+  run: async () => {
+    log('###### START VITALS DATA ############')
     const season = detectSeason()
     let rawHtml = loadFHLFile('PlayerVitals')
+
+    const insertsPlayer = []
+    const insertsPlayerdata = []
 
     const teams = rawHtml.split('<H2>')
     teams.map((html) => {
@@ -40,7 +44,6 @@ module.exports = {
               playerData.groups[key] = value.trim()
             }
             let {
-              name,
               heightf,
               heighti,
               weight,
@@ -48,8 +51,7 @@ module.exports = {
               salary,
               contract,
               age,
-              number,
-              ...seasonData
+              number
             } = playerData.groups
             rookie = rookie === '*' ? true : false
             salary = salary.replace('.', '')
@@ -58,35 +60,41 @@ module.exports = {
               parseInt(heightf) * 30.48 + parseInt(heighti) * 2.54
             )
             const playerId = generatePlayerId(playerData.groups.name)
-            db('player')
-              .insert({
-                id: playerId,
-                height,
-                weight
-              })
-              .onConflict()
-              .merge(['height', 'weight'])
-              .then()
-              .catch((e) => console.log(e))
 
-            db('playerdata')
-              .insert({
-                playerid: playerId,
-                season,
-                rookie,
-                salary,
-                contract,
-                age,
-                number
-              })
-              .onConflict()
-              .merge(['rookie', 'salary', 'number', 'contract', 'age'])
-              .then()
-              .catch((e) => console.log(e))
+            insertsPlayer.push({
+              id: playerId,
+              height,
+              weight
+            })
+            insertsPlayerdata.push({
+              playerid: playerId,
+              season,
+              rookie,
+              salary,
+              contract,
+              age,
+              number
+            })
           }
         })
       }
     })
-    console.log('###### VITALS DATA DONE ############')
+    if (insertsPlayer.length > 0) {
+      await db('player')
+        .insert(insertsPlayer)
+        .onConflict()
+        .merge(['height', 'weight'])
+        .then()
+        .catch((e) => console.log('vitalData write player', e))
+    }
+    if (insertsPlayerdata.length > 0) {
+      await db('playerdata')
+        .insert(insertsPlayerdata)
+        .onConflict()
+        .merge(['rookie', 'salary', 'number', 'contract', 'age'])
+        .then()
+        .catch((e) => console.log('vitalData write playerdata', e))
+    }
+    log('###### VITALS DATA DONE ############')
   }
 }

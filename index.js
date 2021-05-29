@@ -15,15 +15,12 @@ try {
   // error
 }
 
-const { initDatabase, all, close } = require('./db/init')
-initDatabase()
-
-Object.keys(updater).map((update) => {
-  if (!runOnly || (runOnly && runOnly === update)) {
-    updater[update].run()
+const runAll = async () => {
+  for (const update of Object.keys(updater)) {
+    if (!runOnly || (runOnly && runOnly === update)) {
+      await updater[update].run()
+    }
   }
-})
+}
 
-console.log(all('SELECT rowid AS id, sim_name, sim_id FROM teams'))
-
-close()
+runAll()
