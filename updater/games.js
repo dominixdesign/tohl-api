@@ -1,8 +1,9 @@
 const xpath = require('xpath'),
-  _at = require('lodash.at'),
   dom = require('xmldom').DOMParser,
+  generatePlayerId = require('../lib/playerId'),
   loadFHLFile = require('../lib/filesystem/loadFHLFile'),
   detectSeason = require('../lib/detectSeason'),
+  { team } = require('../lib/team'),
   parseScoreTable = require('./games/parseScoreTable'),
   db = require('../server/helpers/db'),
   log = require('../server/helpers/logger')
@@ -26,48 +27,50 @@ const goalRowPattern = new RegExp(
 
 const penaltiesRowPattern = new RegExp(
   [
-    '(?<player>[A-Z]' + '\\' + '. [A-Z]*) ',
+    '(?<player>[A-Z]' + '\\' + '. [A-Z-]*) ',
     '(?<team>[A-Z0-9]{1,3}) ',
-    '' + '\\' + '((?<penalty>[A-Z-]*), ',
-    '(?<duration>Minor|Double Minor|Major)',
-    '(?<misconduct>, Game Misconduct)*' + '\\' + ') ',
-    '(?<minutes>[0-9]{2}):',
-    '(?<seconds>[0-9]{2})'
+    '' + '\\' + '((?<penalty>[A-Z-]*)(, )*',
+    '(?<duration>Minor|Double Minor|Major)*',
+    '(?<misconduct>, Misconduct)*',
+    '(?<gamemisconduct>, Game Misconduct)*' + '\\' + ') ',
+    '(?<min>[0-9]{2}):',
+    '(?<sec>[0-9]{2})'
   ].join(''),
   'gm'
 )
 
-const lastNameToPlayer = {}
+const rosterPattern = new RegExp(
+  [
+    '(?<player>[a-zA-Z- ]{21})',
+    '(?<goals>[0-9 ]{3})',
+    '(?<assists>[0-9 ]{3})',
+    '(?<pts>[0-9 ]{3})',
+    '(?<plumi>[0-9-+Even ]{6})',
+    '(?<pim>[0-9 ]{4})',
+    '(?<shts>[0-9 ]{3})',
+    '(?<hits>[0-9 ]{4})',
+    '(?<it>[0-9 ]{2})'
+  ].join(''),
+  'gm'
+)
+
+const durations = {
+  Minor: 2,
+  Mayor: 5,
+  fighting: 0,
+  'Double Minor': 4
+}
 
 module.exports = {
   run: async () => {
     log('###### START GAMES ############')
-    if (Object.keys(lastNameToPlayer).length === 0) {
-      const dbData = await db('player').select('id', 'lname').then().catch()
-
-      dbData.forEach((r) => {
-        const name = r.lname.toLowerCase()
-        if (!lastNameToPlayer[name]) {
-          lastNameToPlayer[name] = []
-        }
-        lastNameToPlayer[name].push(r.id)
-      })
-    }
-    const mapLastNameToPlayer = (lastname) => {
-      const rows = lastNameToPlayer[lastname.toLowerCase()]
-      if (rows && rows.length === 1) {
-        return rows[0]
-      } else {
-        return lastname
-      }
-    }
 
     const season = detectSeason()
-    log('###### INIT GAMES ############')
-    let gameNumber = 1
+    let gameNumber = 0
     let gameExists = true
 
     do {
+      gameNumber = gameNumber + 238
       const insertGoals = []
 
       let rawHtml = loadFHLFile('' + gameNumber)
@@ -88,6 +91,7 @@ module.exports = {
           .select('string(//H3)', doc)
           .toLowerCase()
           .split(' at ')
+          .map(team)
 
         gamedata.home = home
         gamedata.away = away
@@ -99,10 +103,48 @@ module.exports = {
         gamedata.shots = shots
         gamedata.score = goals
 
-        // split HTML in four parts (INtro, Scoring, Team1, Team2 + Farm)
+        // split HTML in four parts (INtro, Scoring, TeamAway, TeamHome + Farm)
         const htmlParts = rawHtml.split('<BR><BR>')
 
-        console.log(htmlParts[2])
+        const teamRoster = {
+          [home]: {
+            goals: {},
+            assists: {},
+            pim: {}
+          },
+          [away]: {
+            goals: {},
+            assists: {},
+            pim: {}
+          }
+        }
+        const teamHtml = {
+          [home]: htmlParts[3],
+          [away]: htmlParts[2]
+        }
+        for (let team of [home, away]) {
+          let rosterArray
+          while ((rosterArray = rosterPattern.exec(teamHtml[team])) !== null) {
+            if (rosterArray.groups.player) {
+              const name = rosterArray.groups.player.trim()
+              if (rosterArray.groups.goals > 0) {
+                teamRoster[team]['goals'][name.split(' ')[1].toLowerCase()] =
+                  generatePlayerId(name)
+              }
+              if (rosterArray.groups.assists > 0) {
+                teamRoster[team]['assists'][name.split(' ')[1].toLowerCase()] =
+                  generatePlayerId(name)
+              }
+              if (rosterArray.groups.pim > 0) {
+                teamRoster[team]['pim'][
+                  name.split(' ')[0].substr(0, 1).toLowerCase() +
+                    '_' +
+                    name.split(' ')[1].toLowerCase()
+                ] = generatePlayerId(name)
+              }
+            }
+          }
+        }
 
         gamedata.goals = []
         gamedata.penalties = []
@@ -114,21 +156,33 @@ module.exports = {
             [away]: 0
           }
         // go through periods
-        htmlParts[1].split('<BR>').forEach(async (entry) => {
+        for (const entry of htmlParts[1].split('<BR>')) {
           const periodSwitch = entry.match(/<B>(Period [123]|Overtime)<\/B>/)
           if (periodSwitch) {
             period++
           } else {
             let goalData = goalRowPattern.exec(entry)
+            goalRowPattern.lastIndex = 0
             if (goalData) {
               // it's a goal!
               // id mapping
               // playernames
               const tags = []
-              let [goalscorer, primaryassist, secondaryassist] = _at(
-                goalData.groups,
-                ['goalscorer', 'primaryassist', 'secondaryassist']
-              ).map((p) => p && mapLastNameToPlayer(p.toLowerCase()))
+
+              const goalscorer =
+                teamRoster[team(goalData.groups.team)]['goals'][
+                  goalData.groups.goalscorer.toLowerCase()
+                ]
+              const primaryassist = goalData.groups.primaryassist
+                ? teamRoster[team(goalData.groups.team)]['assists'][
+                    goalData.groups.primaryassist.toLowerCase()
+                  ]
+                : null
+              const secondaryassist = goalData.groups.secondaryassist
+                ? teamRoster[team(goalData.groups.team)]['assists'][
+                    goalData.groups.secondaryassist.toLowerCase()
+                  ]
+                : null
 
               // time
               const time = {
@@ -182,22 +236,62 @@ module.exports = {
               })
             }
 
-            await db('goal')
-              .insert(insertGoals)
-              .onConflict()
-              .ignore()
-              .then()
-              .catch((e) => console.log(e))
+            if (insertGoals.length > 0) {
+              await db('goal')
+                .insert(insertGoals)
+                .onConflict()
+                .ignore()
+                .then()
+                .catch((e) => console.log(e))
+            }
 
-            //let myArray
-            //while ((myArray = penaltiesRowPattern.exec(entry)) !== null) {
-            //  console.log('pen', myArray.groups)
-            //}
+            const insertPenalty = []
+            const filterMatches = [...entry.matchAll(penaltiesRowPattern)] || []
+            for (const penaltyData of filterMatches) {
+              const time = {
+                min: parseInt(penaltyData.groups.min) + (period - 1) * 20,
+                sec: parseInt(penaltyData.groups.sec)
+              }
+              const player =
+                teamRoster[team(penaltyData.groups.team)]['pim'][
+                  penaltyData.groups.player.toLowerCase().replace('. ', '_')
+                ]
+              const tags = []
+              if (penaltyData.groups.misconduct) {
+                tags.push('misconduct')
+              }
+              if (penaltyData.groups.gamemisconduct) {
+                tags.push('gamemisconduct')
+              }
+
+              insertPenalty.push({
+                id: `${season}-${gameNumber}-${time.min}-${time.sec}`,
+                season,
+                game: gameNumber,
+                player,
+                team: penaltyData.groups.team.toLowerCase(),
+                period,
+                minutes: time['min'],
+                seconds: time['sec'],
+                length:
+                  durations[
+                    penaltyData.groups.duration ||
+                      penaltyData.groups.penalty.toLowerCase()
+                  ],
+                offense: penaltyData.groups.penalty.toLowerCase(),
+                tags: tags.join(',')
+              })
+            }
+            if (insertPenalty.length > 0) {
+              await db('penalty')
+                .insert(insertPenalty)
+                .onConflict()
+                .ignore()
+                .then()
+                .catch((e) => console.log(e))
+            }
           }
-        })
-
-        // next game
-        gameNumber = gameNumber + 100
+        }
       }
     } while (gameExists)
     log('###### END GAMES ############')
