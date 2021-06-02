@@ -7,8 +7,8 @@ const log = require('../../server/helpers/logger')
 const playerRowPattern = new RegExp(
   [
     '(?<number>[0-9 ]{2}) ',
-    '(?<rookie>' + '\\' + '*| {1})',
-    '(?<name>[A-Za-z ]{24}) ',
+    '(?<rookie>\\*| {1})',
+    "(?<name>[A-Za-z \\-'.]{24}) ",
     '(?<pos>LW| C| G| D|RW) ',
     ' +',
     '(?<age>[0-9]{2})  ',
@@ -32,7 +32,7 @@ module.exports = {
     const insertsPlayerdata = []
 
     const teams = rawHtml.split('<H2>')
-    teams.map((html) => {
+    for (const html of teams) {
       let teamnameRegex = html.match(/>([A-Z]{1,20})</)
       if (teamnameRegex) {
         // const teamId = teamnameRegex[1].toLowerCase()
@@ -78,7 +78,7 @@ module.exports = {
           }
         })
       }
-    })
+    }
     if (insertsPlayer.length > 0) {
       await db('player')
         .insert(insertsPlayer)

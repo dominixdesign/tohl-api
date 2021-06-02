@@ -12,12 +12,12 @@ const goalRowPattern = new RegExp(
   [
     '[0-9]{1,2}. ',
     '(?<team>[A-Z]+), ',
-    '(?<goalscorer>[A-Z]+) ',
+    "(?<goalscorer>[A-Z-']+) ",
     '[0-9]+ ',
-    '' + '\\' + '((?<primaryassist>[A-Z]+)',
-    '(, (?<secondaryassist>[A-Z]+))*' + '\\' + ') *',
-    '(?<pp>' + '\\' + '(PP' + '\\' + '))*',
-    '(?<sh>' + '\\' + '(SH' + '\\' + '))*',
+    "\\((?<primaryassist>[A-Z-']+)",
+    "(, (?<secondaryassist>[A-Z-']+))*\\) *",
+    '(?<pp>\\(PP\\))*',
+    '(?<sh>\\(SH\\))*',
     ', ',
     '(?<min>[0-9]{2})',
     ':',
@@ -27,12 +27,12 @@ const goalRowPattern = new RegExp(
 
 const penaltiesRowPattern = new RegExp(
   [
-    '(?<player>[A-Z]' + '\\' + '. [A-Z-]*) ',
+    "(?<player>[A-Z]\\. [A-Z-']*) ",
     '(?<team>[A-Z0-9]{1,3}) ',
-    '' + '\\' + '((?<penalty>[A-Z-]*)(, )*',
+    '\\((?<penalty>[A-Z-]*)(, )*',
     '(?<duration>Minor|Double Minor|Major)*',
     '(?<misconduct>, Misconduct)*',
-    '(?<gamemisconduct>, Game Misconduct)*' + '\\' + ') ',
+    '(?<gamemisconduct>, Game Misconduct)*\\) ',
     '(?<min>[0-9]{2}):',
     '(?<sec>[0-9]{2})'
   ].join(''),
@@ -41,7 +41,7 @@ const penaltiesRowPattern = new RegExp(
 
 const rosterPattern = new RegExp(
   [
-    '(?<player>[a-zA-Z- ]{21})',
+    "(?<player>[a-zA-Z- .']{21})",
     '(?<goals>[0-9 ]{3})',
     '(?<assists>[0-9 ]{3})',
     '(?<pts>[0-9 ]{3})',
@@ -66,11 +66,10 @@ module.exports = {
     log('###### START GAMES ############')
 
     const season = detectSeason()
-    let gameNumber = 0
+    let gameNumber = 286
     let gameExists = true
 
     do {
-      gameNumber = gameNumber + 238
       const insertGoals = []
 
       let rawHtml = loadFHLFile('' + gameNumber)
@@ -102,6 +101,12 @@ module.exports = {
 
         gamedata.shots = shots
         gamedata.score = goals
+        let gamewinner
+        if (goals[home].total > goals[away].total) {
+          gamewinner = parseInt(goals[away].total) + 1
+        } else if (goals[home].total < goals[away].total) {
+          gamewinner = parseInt(goals[home].total) + 1
+        }
 
         // split HTML in four parts (INtro, Scoring, TeamAway, TeamHome + Farm)
         const htmlParts = rawHtml.split('<BR><BR>')
@@ -128,18 +133,20 @@ module.exports = {
             if (rosterArray.groups.player) {
               const name = rosterArray.groups.player.trim()
               if (rosterArray.groups.goals > 0) {
-                teamRoster[team]['goals'][name.split(' ')[1].toLowerCase()] =
-                  generatePlayerId(name)
+                teamRoster[team]['goals'][
+                  name.split(' ')[1].toLowerCase().replace('v.', '')
+                ] = generatePlayerId(name)
               }
               if (rosterArray.groups.assists > 0) {
-                teamRoster[team]['assists'][name.split(' ')[1].toLowerCase()] =
-                  generatePlayerId(name)
+                teamRoster[team]['assists'][
+                  name.split(' ')[1].toLowerCase().replace('v.', '')
+                ] = generatePlayerId(name)
               }
               if (rosterArray.groups.pim > 0) {
                 teamRoster[team]['pim'][
                   name.split(' ')[0].substr(0, 1).toLowerCase() +
                     '_' +
-                    name.split(' ')[1].toLowerCase()
+                    name.split(' ')[1].toLowerCase().replace('v.', '')
                 ] = generatePlayerId(name)
               }
             }
@@ -191,7 +198,7 @@ module.exports = {
               }
 
               // score
-              score[goalData.groups.team.toLowerCase()]++
+              score[team(goalData.groups.team)]++
               const concedingteam =
                 goalData.groups.team.toLowerCase() === home ? away : home
 
@@ -202,7 +209,7 @@ module.exports = {
                 ? 'sh'
                 : null
 
-              if (goalData.groups.team.toLowerCase() === home) {
+              if (team(goalData.groups.team) === home) {
                 tags.push('home')
               } else {
                 tags.push('away')
@@ -214,6 +221,9 @@ module.exports = {
 
               if (score[concedingteam] === 0) {
                 tags.push('first')
+              }
+              if (score[team(goalData.groups.team)] === gamewinner) {
+                tags.push('gamewinner')
               }
 
               const goalId = `${season}-${gameNumber}-${time.min}-${time.sec}`
@@ -293,6 +303,7 @@ module.exports = {
           }
         }
       }
+      gameNumber = gameNumber + 1000
     } while (gameExists)
     log('###### END GAMES ############')
   }

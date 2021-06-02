@@ -7,7 +7,7 @@ const log = require('../../server/helpers/logger')
 const playerRowPattern = new RegExp(
   [
     '(?<number>[0-9 ]{2}) ',
-    '(?<name>[A-Za-z ]{22}) ',
+    "(?<name>[A-Za-z \\-'.]{22}) ",
     '(?<pos>LW| C| G| D|RW) ',
     '(?<hand>R|L) {2}',
     '(?<cd>OK|[0-9]{2}) ',
@@ -40,7 +40,7 @@ module.exports = {
     const season = detectSeason()
     let rawHtml = loadFHLFile('Rosters')
     const teams = rawHtml.split('<H2>')
-    teams.forEach(async (html) => {
+    for (const html of teams) {
       let teamnameRegex = html.match(/>([A-Z]{1,20})</)
       if (teamnameRegex) {
         const teamId = teamnameRegex[1].toLowerCase()
@@ -53,7 +53,7 @@ module.exports = {
             }
             const { name, hand, ...seasonData } = playerData.groups
             const playerId = generatePlayerId(playerData.groups.name)
-            const [fname, lname] = name.split(' ', 2)
+            const [fname, lname] = name.trim().split(' ', 2)
             // insert to db
             insertsPlayer.push({
               id: playerId,
@@ -73,24 +73,23 @@ module.exports = {
           }
         })
       }
-
-      if (insertsPlayer.length > 0) {
-        await db('player')
-          .insert(insertsPlayer)
-          .onConflict()
-          .merge(['fname', 'lname', 'hand'])
-          .then()
-          .catch()
-      }
-      if (insertsPlayerdata.length > 0) {
-        await db('playerdata')
-          .insert(insertsPlayerdata)
-          .onConflict()
-          .merge(mergeFields)
-          .then()
-          .catch()
-      }
-    })
+    }
+    if (insertsPlayer.length > 0) {
+      await db('player')
+        .insert(insertsPlayer)
+        .onConflict()
+        .merge(['fname', 'lname', 'hand'])
+        .then()
+        .catch()
+    }
+    if (insertsPlayerdata.length > 0) {
+      await db('playerdata')
+        .insert(insertsPlayerdata)
+        .onConflict()
+        .merge(mergeFields)
+        .then()
+        .catch()
+    }
     log('###### ROSTER DATA DONE ############')
   }
 }
