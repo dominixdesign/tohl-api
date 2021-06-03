@@ -44,12 +44,12 @@ const rosterPattern = new RegExp(
     "(?<player>[a-zA-Z- .']{21})",
     '(?<goals>[0-9 ]{3})',
     '(?<assists>[0-9 ]{3})',
-    '(?<pts>[0-9 ]{3})',
-    '(?<plumi>[0-9-+Even ]{6})',
+    '(?<points>[0-9 ]{3})',
+    '(?<plusminus>[0-9-+Even ]{6})',
     '(?<pim>[0-9 ]{4})',
-    '(?<shts>[0-9 ]{3})',
+    '(?<shots>[0-9 ]{3})',
     '(?<hits>[0-9 ]{4})',
-    '(?<it>[0-9 ]{2})'
+    '(?<icetime>[0-9 ]{2})'
   ].join(''),
   'gm'
 )
@@ -127,30 +127,54 @@ module.exports = {
           [home]: htmlParts[3],
           [away]: htmlParts[2]
         }
+        const insertLineup = []
         for (let team of [home, away]) {
-          let rosterArray
-          while ((rosterArray = rosterPattern.exec(teamHtml[team])) !== null) {
+          const filterMatches =
+            [...teamHtml[team].matchAll(rosterPattern)] || []
+          for (const rosterArray of filterMatches) {
             if (rosterArray.groups.player) {
-              const name = rosterArray.groups.player.trim()
+              Object.keys(rosterArray.groups).map(function (key) {
+                rosterArray.groups[key] = rosterArray.groups[key]
+                  .trim()
+                  .toLowerCase()
+              })
+              const playerId = generatePlayerId(rosterArray.groups.player)
+              const name = rosterArray.groups.player.split(' ')
+              const playerRow = {
+                ...rosterArray.groups,
+                season,
+                team,
+                game: gameNumber,
+                player: playerId,
+                plusminus:
+                  rosterArray.groups.plusminus === 'even'
+                    ? 0
+                    : rosterArray.groups.plusminus
+              }
+              insertLineup.push(playerRow)
+
               if (rosterArray.groups.goals > 0) {
-                teamRoster[team]['goals'][
-                  name.split(' ')[1].toLowerCase().replace('v.', '')
-                ] = generatePlayerId(name)
+                teamRoster[team]['goals'][name[1].replace('v.', '')] = playerId
               }
               if (rosterArray.groups.assists > 0) {
-                teamRoster[team]['assists'][
-                  name.split(' ')[1].toLowerCase().replace('v.', '')
-                ] = generatePlayerId(name)
+                teamRoster[team]['assists'][name[1].replace('v.', '')] =
+                  playerId
               }
               if (rosterArray.groups.pim > 0) {
                 teamRoster[team]['pim'][
-                  name.split(' ')[0].substr(0, 1).toLowerCase() +
-                    '_' +
-                    name.split(' ')[1].toLowerCase().replace('v.', '')
-                ] = generatePlayerId(name)
+                  name[0].substr(0, 1) + '_' + name[1].replace('v.', '')
+                ] = playerId
               }
             }
           }
+        }
+        if (insertLineup.length > 0) {
+          await db('lineup')
+            .insert(insertLineup)
+            .onConflict()
+            .ignore()
+            .then()
+            .catch((e) => console.log(e))
         }
 
         gamedata.goals = []
