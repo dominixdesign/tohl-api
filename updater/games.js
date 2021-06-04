@@ -137,7 +137,7 @@ module.exports = {
         const injuredPlayersMatches =
           [
             ...htmlParts[3].matchAll(
-              /(?<player>[a-zA-Z- .']+) injured at (?<min>[0-9]{2}):(?<sec>[0-9]{2}) of the (?<period>[123])/gm
+              /(?<player>[a-zA-Z- .']+) injured at (?<min>[0-9]{2}):(?<sec>[0-9]{2}) of the (?<period>[0-9])/gm
             )
           ] || []
         for (const { groups } of injuredPlayersMatches) {
