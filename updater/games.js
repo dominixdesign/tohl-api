@@ -57,7 +57,7 @@ const rosterPattern = new RegExp(
 const durations = {
   Minor: 2,
   Mayor: 5,
-  fighting: 0,
+  fighting: 5,
   'Double Minor': 4
 }
 
@@ -66,16 +66,37 @@ module.exports = {
     log('###### START GAMES ############')
 
     const season = detectSeason()
-    let gameNumber = 286
+    const isPlayoff = season.includes('PLF')
+    let round = 1
+    let gameNumber = 10
     let gameExists = true
 
     do {
       const insertGoals = []
 
-      let rawHtml = loadFHLFile('' + gameNumber)
+      let rawHtml = false
+      if (isPlayoff) {
+        let rawHtmlPLF = false
+        do {
+          rawHtmlPLF = loadFHLFile(`-R${round}-${gameNumber}`)
+          if (rawHtmlPLF === false && round < 4) {
+            round++
+            gameNumber = 1
+          } else {
+            rawHtml = rawHtmlPLF
+            rawHtmlPLF = true
+          }
+        } while (rawHtmlPLF === false)
+      } else {
+        rawHtml = loadFHLFile('' + gameNumber)
+      }
+
       if (rawHtml === false) {
         gameExists = false
       } else {
+        const gameNumberDB = isPlayoff
+          ? `${round}${gameNumber.toString().padStart(2, '0')}`
+          : gameNumber
         const gamedata = {}
         //cleanup html
         //rawHtml = rawHtml.replace('<FONT SIZE -1>', '')
@@ -111,6 +132,21 @@ module.exports = {
         // split HTML in four parts (INtro, Scoring, TeamAway, TeamHome + Farm)
         const htmlParts = rawHtml.split('<BR><BR>')
 
+        // begin injured players
+        const injuredPlayers = {}
+        const injuredPlayersMatches =
+          [
+            ...htmlParts[3].matchAll(
+              /(?<player>[a-zA-Z- .']+) injured at (?<min>[0-9]{2}):(?<sec>[0-9]{2}) of the (?<period>[123])/gm
+            )
+          ] || []
+        for (const { groups } of injuredPlayersMatches) {
+          injuredPlayers[generatePlayerId(groups.player)] = `${
+            parseInt(groups.min) + (parseInt(groups.period) - 1) * 20
+          }:${parseInt(groups.sec)}`
+        }
+        // end injured players
+
         const teamRoster = {
           [home]: {
             goals: {},
@@ -144,7 +180,8 @@ module.exports = {
                 ...rosterArray.groups,
                 season,
                 team,
-                game: gameNumber,
+                injured: injuredPlayers[playerId],
+                game: gameNumberDB,
                 player: playerId,
                 plusminus:
                   rosterArray.groups.plusminus === 'even'
@@ -255,7 +292,7 @@ module.exports = {
               insertGoals.push({
                 id: goalId,
                 season,
-                game: gameNumber,
+                game: gameNumberDB,
                 goalscorer,
                 primaryassist,
                 secondaryassist,
@@ -301,7 +338,7 @@ module.exports = {
               insertPenalty.push({
                 id: `${season}-${gameNumber}-${time.min}-${time.sec}`,
                 season,
-                game: gameNumber,
+                game: gameNumberDB,
                 player,
                 team: penaltyData.groups.team.toLowerCase(),
                 period,
@@ -327,7 +364,7 @@ module.exports = {
           }
         }
       }
-      gameNumber = gameNumber + 1000
+      gameNumber = parseInt(gameNumber) + 1000
     } while (gameExists)
     log('###### END GAMES ############')
   }
