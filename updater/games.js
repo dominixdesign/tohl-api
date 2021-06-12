@@ -189,6 +189,26 @@ module.exports = {
         }
         // end entered goalies
 
+        // begin three stars
+        const threeStars = {}
+        const threeStarsMatches =
+          [
+            ...htmlParts[1].matchAll(
+              / (?<star>[1-3]) - (?<player>[a-zA-Z- .']*)\((?<team>[A-Z0-9 ]{3})/gm
+            )
+          ] || []
+        for (const { groups } of threeStarsMatches) {
+          threeStars[generatePlayerId(groups.player)] =
+            groups.star === '1'
+              ? 'first'
+              : groups.star === '2'
+              ? 'second'
+              : groups.star === '3'
+              ? 'third'
+              : null
+        }
+        // end three stars
+
         const teamRoster = {
           [home]: {
             goals: {},
@@ -214,6 +234,7 @@ module.exports = {
             team: teamId,
             injured: injuredPlayers[playerId],
             ejected: ejectedPlayers[playerId],
+            star: threeStars[playerId],
             game: gameNumberDB,
             saves: groups.saves,
             shotsfaced: groups.shotsfaced,
@@ -252,6 +273,7 @@ module.exports = {
                 ejected: ejectedPlayers[playerId],
                 game: gameNumberDB,
                 player: playerId,
+                star: threeStars[playerId],
                 plusminus:
                   rosterArray.groups.plusminus === 'even'
                     ? 0
