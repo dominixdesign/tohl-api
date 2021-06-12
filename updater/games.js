@@ -78,8 +78,8 @@ module.exports = {
 
     const season = detectSeason()
     const isPlayoff = season.includes('PLF')
-    let round = 2
-    let gameNumber = 1
+    let round = 1
+    let gameNumber = 4
     let gameExists = true
 
     do {
@@ -209,6 +209,32 @@ module.exports = {
         }
         // end three stars
 
+        // begin fighting stats
+        const fightsWon = {}
+        const fightsLose = {}
+        const fightsDraw = {}
+        const fightersMatches =
+          [
+            ...htmlParts[3].matchAll(
+              /(?<winner>[a-zA-Z- .']+) beats up (?<loser>[a-zA-Z- .']+)|(?<draw1>[a-zA-Z- .']+) and (?<draw2>[a-zA-Z- .']+) fight to a draw/gm
+            )
+          ] || []
+        const setFight = (input, player) => {
+          input[player] = !input[player] ? 1 : input[player]++
+          return input
+        }
+        for (const { groups } of fightersMatches) {
+          if (groups.winner) {
+            setFight(fightsWon, generatePlayerId(groups.winner))
+            setFight(fightsLose, generatePlayerId(groups.loser))
+          }
+          if (groups.draw1) {
+            setFight(fightsDraw, generatePlayerId(groups.draw1))
+            setFight(fightsDraw, generatePlayerId(groups.draw2))
+          }
+        }
+        // end fighting stats
+
         const teamRoster = {
           [home]: {
             goals: {},
@@ -274,6 +300,9 @@ module.exports = {
                 game: gameNumberDB,
                 player: playerId,
                 star: threeStars[playerId],
+                fightswon: fightsWon[playerId],
+                fightslose: fightsLose[playerId],
+                fightsdraw: fightsDraw[playerId],
                 plusminus:
                   rosterArray.groups.plusminus === 'even'
                     ? 0
@@ -282,20 +311,26 @@ module.exports = {
               insertLineup.push(playerRow)
 
               if (rosterArray.groups.goals > 0) {
-                teamRoster[team]['goals'][name[1].replace('v.', '')] = playerId
+                teamRoster[team]['goals'][
+                  name[name.length - 1].replace('v.', '')
+                ] = playerId
               }
               if (rosterArray.groups.assists > 0) {
-                teamRoster[team]['assists'][name[1].replace('v.', '')] =
-                  playerId
+                teamRoster[team]['assists'][
+                  name[name.length - 1].replace('v.', '')
+                ] = playerId
               }
               if (rosterArray.groups.pim > 0) {
                 teamRoster[team]['pim'][
-                  name[0].substr(0, 1) + '_' + name[1].replace('v.', '')
+                  name[0].substr(0, 1) +
+                    '_' +
+                    name[name.length - 1].replace('v.', '')
                 ] = playerId
               }
             }
           }
         }
+        log('insert lineup')
         if (insertLineup.length > 0) {
           await db('lineup')
             .insert(insertLineup)
@@ -399,15 +434,6 @@ module.exports = {
               })
             }
 
-            if (insertGoals.length > 0) {
-              await db('goal')
-                .insert(insertGoals)
-                .onConflict()
-                .ignore()
-                .then()
-                .catch((e) => console.log(e))
-            }
-
             const filterMatches = [...entry.matchAll(penaltiesRowPattern)] || []
             for (const penaltyData of filterMatches) {
               const time = {
@@ -445,6 +471,16 @@ module.exports = {
             }
           }
         }
+        log('insert goals')
+        if (insertGoals.length > 0) {
+          await db('goal')
+            .insert(insertGoals)
+            .onConflict()
+            .ignore()
+            .then()
+            .catch((e) => console.log(e))
+        }
+        log('insert penalties')
         if (insertPenalty.length > 0) {
           await db('penalty')
             .insert(insertPenalty)
@@ -482,6 +518,7 @@ module.exports = {
             }
           }
         }
+        log('insert lineup 2')
         if (insertGoalies.length > 0) {
           await db('lineup')
             .insert(insertGoalies)
@@ -513,6 +550,7 @@ module.exports = {
           powerplay[team(groups.team)].goals = groups.ppgoals
         }
 
+        log('update game')
         await db('game')
           .where({
             season,
