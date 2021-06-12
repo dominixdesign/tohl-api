@@ -125,9 +125,6 @@ module.exports = {
           .split(' at ')
           .map(team)
 
-        gamedata.home = home
-        gamedata.away = away
-
         // parse shots and goals
         const shots = parseScoreTable(doc, home, away, '1')
         const goals = parseScoreTable(doc, home, away, '3')
@@ -285,9 +282,6 @@ module.exports = {
             .then()
             .catch((e) => console.log(e))
         }
-
-        gamedata.goals = []
-        gamedata.penalties = []
 
         const insertPenalty = []
 
@@ -509,7 +503,8 @@ module.exports = {
             pphome: powerplay[home].situations,
             ppaway: powerplay[away].situations,
             ppghome: powerplay[home].goals,
-            ppgaway: powerplay[away].goals
+            ppgaway: powerplay[away].goals,
+            gamedata: JSON.stringify(gamedata)
           })
           .then()
           .catch((e) => console.log(e))
