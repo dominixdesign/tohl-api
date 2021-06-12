@@ -84,6 +84,7 @@ module.exports = {
 
     do {
       const insertGoals = []
+      let periods = 0
 
       let rawHtml = false
       if (isPlayoff) {
@@ -301,6 +302,7 @@ module.exports = {
           const periodSwitch = entry.match(/<B>(Period [123]|Overtime)<\/B>/)
           if (periodSwitch) {
             period++
+            periods++
           } else {
             let goalData = goalRowPattern.exec(entry)
             goalRowPattern.lastIndex = 0
@@ -364,10 +366,7 @@ module.exports = {
                 tags.push('gamewinner')
               }
 
-              const goalId = `${season}-${gameNumber}-${time.min}-${time.sec}`
-
               insertGoals.push({
-                id: goalId,
                 season,
                 game: gameNumberDB,
                 goalscorer,
@@ -412,7 +411,6 @@ module.exports = {
               }
 
               insertPenalty.push({
-                id: `${season}-${gameNumber}-${time.min}-${time.sec}`,
                 season,
                 game: gameNumberDB,
                 player,
@@ -477,6 +475,44 @@ module.exports = {
             .catch((e) => console.log(e))
         }
         // end goalies
+
+        const powerplay = {
+          [home]: {
+            situations: 0,
+            goals: 0
+          },
+          [away]: {
+            situations: 0,
+            goals: 0
+          }
+        }
+        const powerplayMatches =
+          [
+            ...htmlParts[1].matchAll(
+              /(?<team>[A-Z]+) {2}(?<ppgoals>[0-9]+) for (?<ppsits>[0-9]+)/gm
+            )
+          ] || []
+        for (const { groups } of powerplayMatches) {
+          powerplay[team(groups.team)].situations = groups.ppsits
+          powerplay[team(groups.team)].goals = groups.ppgoals
+        }
+
+        await db('game')
+          .where({
+            season,
+            game: gameNumber
+          })
+          .update({
+            overtimes: periods > 3 ? periods - 3 : null,
+            shotshome: gamedata.shots[home].total,
+            shotsaway: gamedata.shots[away].total,
+            pphome: powerplay[home].situations,
+            ppaway: powerplay[away].situations,
+            ppghome: powerplay[home].goals,
+            ppgaway: powerplay[away].goals
+          })
+          .then()
+          .catch((e) => console.log(e))
       }
       gameNumber = parseInt(gameNumber) + 1000
     } while (gameExists)
