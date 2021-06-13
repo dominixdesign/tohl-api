@@ -22,9 +22,9 @@ const gameDayPattern = new RegExp('Day (?<gameday>[0-9]+)')
 
 module.exports = {
   run: async () => {
-    log('###### START SCHEDULE ############')
-
     const season = detectSeason()
+    log(`### ${season} ### STRT ### SCHEDULE ###`)
+
     let rawHtml = loadFHLFile('Schedule')
     let gameday = 1
     let gameInsert = []
@@ -72,6 +72,6 @@ module.exports = {
         .then()
         .catch((e) => console.log(e))
     }
-    log('###### END SCHEDULE ############')
+    log(`### ${season} ### DONE ### SCHEDULE ###`)
   }
 }

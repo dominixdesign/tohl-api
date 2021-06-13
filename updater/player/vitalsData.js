@@ -24,8 +24,8 @@ const playerRowPattern = new RegExp(
 
 module.exports = {
   run: async () => {
-    log('###### START VITALS DATA ############')
     const season = detectSeason()
+    log(`### ${season} ### STRT ### VITALS DATA ###`)
     let rawHtml = loadFHLFile('PlayerVitals')
 
     const insertsPlayer = []
@@ -95,6 +95,6 @@ module.exports = {
         .then()
         .catch((e) => console.log('vitalData write playerdata', e))
     }
-    log('###### VITALS DATA DONE ############')
+    log(`### ${season} ### DONE ### VITALS DATA ###`)
   }
 }

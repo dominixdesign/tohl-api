@@ -32,7 +32,7 @@ const playerRowPattern = new RegExp(
 module.exports = {
   run: async () => {
     const season = detectSeason()
-    log(`###### START ROSTER DATA ${season} ############`)
+    log(`### ${season} ### STRT ### ROSTER DATA ###`)
 
     const insertsPlayer = []
     const insertsPlayerdata = []
@@ -93,6 +93,6 @@ module.exports = {
         .then()
         .catch()
     }
-    log('###### ROSTER DATA DONE ############')
+    log(`### ${season} ### DONE ### ROSTER DATA ###`)
   }
 }

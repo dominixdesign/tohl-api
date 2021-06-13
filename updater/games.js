@@ -74,9 +74,9 @@ const durations = {
 
 module.exports = {
   run: async () => {
-    log('###### START GAMES ############')
-
     const season = detectSeason()
+    log(`### ${season} ### STRT ### GAME DETAILS ###`)
+
     const isPlayoff = season.includes('PLF')
     let round = 1
     let gameNumber = 4
@@ -330,7 +330,7 @@ module.exports = {
             }
           }
         }
-        log('insert lineup')
+        // log('insert lineup')
         if (insertLineup.length > 0) {
           await db('lineup')
             .insert(insertLineup)
@@ -471,7 +471,7 @@ module.exports = {
             }
           }
         }
-        log('insert goals')
+        // log('insert goals')
         if (insertGoals.length > 0) {
           await db('goal')
             .insert(insertGoals)
@@ -480,7 +480,7 @@ module.exports = {
             .then()
             .catch((e) => console.log(e))
         }
-        log('insert penalties')
+        // log('insert penalties')
         if (insertPenalty.length > 0) {
           await db('penalty')
             .insert(insertPenalty)
@@ -518,7 +518,7 @@ module.exports = {
             }
           }
         }
-        log('insert lineup 2')
+        // log('insert lineup 2')
         if (insertGoalies.length > 0) {
           await db('lineup')
             .insert(insertGoalies)
@@ -550,7 +550,7 @@ module.exports = {
           powerplay[team(groups.team)].goals = groups.ppgoals
         }
 
-        log('update game')
+        // log('update game')
         await db('game')
           .where({
             season,
@@ -571,6 +571,6 @@ module.exports = {
       }
       gameNumber = parseInt(gameNumber) + 1000
     } while (gameExists)
-    log('###### END GAMES ############')
+    log(`### ${season} ### DONE ### GAME DETAILS ###`)
   }
 }
