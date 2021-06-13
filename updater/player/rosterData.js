@@ -31,13 +31,16 @@ const playerRowPattern = new RegExp(
 
 module.exports = {
   run: async () => {
-    log('###### START ROSTER DATA ############')
+    const season = detectSeason()
+    log(`###### START ROSTER DATA ${season} ############`)
 
     const insertsPlayer = []
     const insertsPlayerdata = []
     let mergeFields = []
 
-    const season = detectSeason()
+    // clean rosterData for this season
+    db('playerdata').where('season', season).del()
+
     let rawHtml = loadFHLFile('Rosters')
     const teams = rawHtml.split('<H2>')
     for (const html of teams) {
