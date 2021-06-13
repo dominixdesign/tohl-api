@@ -23,6 +23,7 @@ const runAll = async () => {
       await updater[update].run()
     }
   }
+  process.exit()
 }
 
 runAll()
