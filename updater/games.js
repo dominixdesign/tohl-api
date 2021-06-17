@@ -82,8 +82,13 @@ module.exports = {
     let gameNumber = 4
     let gameExists = true
 
+    const insertGoals = []
+    const insertGoalies = []
+    const insertLineup = []
+    const insertPenalty = []
+    const updateGame = []
+
     do {
-      const insertGoals = []
       let periods = 0
 
       let rawHtml = false
@@ -248,7 +253,6 @@ module.exports = {
           }
         }
         // start goalies
-        const insertGoalies = []
         const goalieMatches = [...htmlParts[1].matchAll(goaliePattern)] || []
         for (const { groups } of goalieMatches) {
           const playerId = generatePlayerId(groups.player)
@@ -278,7 +282,6 @@ module.exports = {
           [home]: htmlParts[3],
           [away]: htmlParts[2]
         }
-        const insertLineup = []
         for (let team of [home, away]) {
           const filterMatches =
             [...teamHtml[team].matchAll(rosterPattern)] || []
@@ -330,17 +333,6 @@ module.exports = {
             }
           }
         }
-        // log('insert lineup')
-        if (insertLineup.length > 0) {
-          await db('lineup')
-            .insert(insertLineup)
-            .onConflict()
-            .ignore()
-            .then()
-            .catch((e) => console.log(e))
-        }
-
-        const insertPenalty = []
 
         // parse game events
         let period = 0,
@@ -471,24 +463,7 @@ module.exports = {
             }
           }
         }
-        // log('insert goals')
-        if (insertGoals.length > 0) {
-          await db('goal')
-            .insert(insertGoals)
-            .onConflict()
-            .ignore()
-            .then()
-            .catch((e) => console.log(e))
-        }
-        // log('insert penalties')
-        if (insertPenalty.length > 0) {
-          await db('penalty')
-            .insert(insertPenalty)
-            .onConflict()
-            .ignore()
-            .then()
-            .catch((e) => console.log(e))
-        }
+
         // start goalies
         for (const goalie of insertGoalies) {
           goalie.assists = insertGoals.filter(
@@ -518,15 +493,7 @@ module.exports = {
             }
           }
         }
-        // log('insert lineup 2')
-        if (insertGoalies.length > 0) {
-          await db('lineup')
-            .insert(insertGoalies)
-            .onConflict()
-            .ignore()
-            .then()
-            .catch((e) => console.log(e))
-        }
+
         // end goalies
 
         const powerplay = {
@@ -550,27 +517,77 @@ module.exports = {
           powerplay[team(groups.team)].goals = groups.ppgoals
         }
 
-        // log('update game')
-        await db('game')
-          .where({
-            season,
-            game: gameNumber
-          })
-          .update({
-            overtimes: periods > 3 ? periods - 3 : null,
-            shotshome: gamedata.shots[home].total,
-            shotsaway: gamedata.shots[away].total,
-            pphome: powerplay[home].situations,
-            ppaway: powerplay[away].situations,
-            ppghome: powerplay[home].goals,
-            ppgaway: powerplay[away].goals,
-            gamedata: JSON.stringify(gamedata)
-          })
-          .then()
-          .catch((e) => console.log(e))
+        updateGame.push({
+          season,
+          game: gameNumber,
+          overtimes: periods > 3 ? periods - 3 : null,
+          shotshome: gamedata.shots[home].total,
+          shotsaway: gamedata.shots[away].total,
+          pphome: powerplay[home].situations,
+          ppaway: powerplay[away].situations,
+          ppghome: powerplay[home].goals,
+          ppgaway: powerplay[away].goals,
+          gamedata: JSON.stringify(gamedata)
+        })
       }
-      gameNumber = parseInt(gameNumber) + 1000
+      gameNumber = parseInt(gameNumber) + 5
     } while (gameExists)
+
+    // log('insert lineup')
+    if (insertLineup.length > 0) {
+      await db('lineup')
+        .insert(insertLineup)
+        .onConflict()
+        .merge()
+        .then()
+        .catch((e) => console.log(e))
+    }
+    // log('insert lineup 2')
+    if (insertGoalies.length > 0) {
+      await db('lineup')
+        .insert(insertGoalies)
+        .onConflict()
+        .merge()
+        .then()
+        .catch((e) => console.log(e))
+    }
+
+    // log('insert goals')
+    if (insertGoals.length > 0) {
+      await db('goal')
+        .insert(insertGoals)
+        .onConflict()
+        .merge()
+        .then()
+        .catch((e) => console.log(e))
+    }
+    // log('insert penalties')
+    if (insertPenalty.length > 0) {
+      await db('penalty')
+        .insert(insertPenalty)
+        .onConflict()
+        .merge()
+        .then()
+        .catch((e) => console.log(e))
+    }
+    // log('update game')
+    if (updateGame.length > 0) {
+      await db('game')
+        .insert(updateGame)
+        .onConflict()
+        .merge()
+        .then()
+        .catch((e) => console.log(e))
+    }
+
+    // if (teamstats) {
+    //   await db('teamstats')
+    //     .insert(Object.values(teamstats))
+    //     .onConflict()
+    //     .merge()
+    //     .then()
+    //     .catch((e) => console.log(e))
+    // }
     log(`### ${season} ### DONE ### GAME DETAILS ###`)
   }
 }
