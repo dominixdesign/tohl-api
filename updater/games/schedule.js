@@ -26,6 +26,7 @@ module.exports = {
     log(`### ${season} ### STRT ### SCHEDULE ###`)
 
     const defaultTeamstats = Object.freeze({
+      season,
       games: 0,
       wins: 0,
       loss: 0,
@@ -76,10 +77,10 @@ module.exports = {
         let winner = null,
           loser = null
         if (!teamstats[home]) {
-          teamstats[home] = Object.assign({}, defaultTeamstats)
+          teamstats[home] = Object.assign({ teamid: home }, defaultTeamstats)
         }
         if (!teamstats[away]) {
-          teamstats[away] = Object.assign({}, defaultTeamstats)
+          teamstats[away] = Object.assign({ teamid: away }, defaultTeamstats)
         }
         const goalshome = parseInt(groups.goalshome.trim())
         const goalsaway = parseInt(groups.goalsaway.trim())
@@ -152,7 +153,15 @@ module.exports = {
         }
       }
     }
-    console.log(teamstats)
+
+    if (teamstats) {
+      await db('teamstats')
+        .insert(Object.values(teamstats))
+        .onConflict()
+        .merge()
+        .then()
+        .catch((e) => console.log(e))
+    }
     if (gameInsert.length > 0) {
       await db('game')
         .insert(gameInsert)
