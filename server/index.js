@@ -12,7 +12,7 @@ const managedTeamDirective = require('./middleware/managedTeamDirective')
 const db = require('./helpers/db')
 
 // modules
-const modules = ['global', 'manager', 'team', 'player']
+const modules = ['global', 'manager', 'team', 'player', 'teamstats']
 let _typeDefs = []
 let _resolvers = []
 modules.forEach((module) => {
