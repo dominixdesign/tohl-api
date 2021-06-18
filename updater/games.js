@@ -79,7 +79,7 @@ module.exports = {
 
     const isPlayoff = season.includes('PLF')
     let round = 1
-    let gameNumber = 4
+    let gameNumber = 1
     let gameExists = true
 
     const insertGoals = []
@@ -87,6 +87,7 @@ module.exports = {
     const insertLineup = []
     const insertPenalty = []
     const updateGame = []
+    const teamstats = {}
 
     do {
       let periods = 0
@@ -130,6 +131,7 @@ module.exports = {
           .split(' at ')
           .map(team)
 
+        const pim = { [home]: 0, [away]: 0 }
         // parse shots and goals
         const shots = parseScoreTable(doc, home, away, '1')
         const goals = parseScoreTable(doc, home, away, '3')
@@ -323,6 +325,7 @@ module.exports = {
                   name[name.length - 1].replace('v.', '')
                 ] = playerId
               }
+              pim[team] += parseInt(rosterArray.groups.pim)
               if (rosterArray.groups.pim > 0) {
                 teamRoster[team]['pim'][
                   name[0].substr(0, 1) +
@@ -529,9 +532,39 @@ module.exports = {
           ppgaway: powerplay[away].goals,
           gamedata: JSON.stringify(gamedata)
         })
+
+        for (const team of [home, away]) {
+          const opponent = team === home ? away : home
+          if (!teamstats[team]) {
+            teamstats[team] = {
+              season,
+              teamid: team,
+              pp: 0,
+              ppg: 0,
+              pk: 0,
+              pkg: 0,
+              pim: 0,
+              shotsfor: 0,
+              shotsagainst: 0
+            }
+          }
+
+          teamstats[team].pp += parseInt(powerplay[team].situations)
+          teamstats[team].ppg += parseInt(powerplay[team].goals)
+          teamstats[team].pk += parseInt(powerplay[opponent].situations)
+          teamstats[team].pkg += parseInt(powerplay[opponent].goals)
+          teamstats[team].shotsfor += parseInt(gamedata.shots[team].total)
+          teamstats[team].shotsagainst += parseInt(
+            gamedata.shots[opponent].total
+          )
+          teamstats[team].pim += parseInt(pim[team])
+        }
       }
+
       gameNumber = parseInt(gameNumber) + 5
     } while (gameExists)
+
+    console.log(teamstats)
 
     // log('insert lineup')
     if (insertLineup.length > 0) {
@@ -580,14 +613,14 @@ module.exports = {
         .catch((e) => console.log(e))
     }
 
-    // if (teamstats) {
-    //   await db('teamstats')
-    //     .insert(Object.values(teamstats))
-    //     .onConflict()
-    //     .merge()
-    //     .then()
-    //     .catch((e) => console.log(e))
-    // }
+    if (teamstats) {
+      await db('teamstats')
+        .insert(Object.values(teamstats))
+        .onConflict()
+        .merge()
+        .then()
+        .catch((e) => console.log(e))
+    }
     log(`### ${season} ### DONE ### GAME DETAILS ###`)
   }
 }
