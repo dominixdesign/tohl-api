@@ -22,6 +22,16 @@ modules.forEach((module) => {
 })
 
 const server = new ApolloServer({
+  formatError: (err) => {
+    // TODO: hier einbauen, dass mysql fehler nicht durchgereicht werden
+    if (err.message.isAdmin) {
+      return err
+    } else {
+      console.log(err)
+      return 'internal server error'
+    }
+  },
+  plugins: [require('./middleware/errorHandling')],
   schema: makeExecutableSchema({
     typeDefs: _typeDefs,
     resolvers: _resolvers,
