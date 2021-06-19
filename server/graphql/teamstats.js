@@ -4,6 +4,16 @@ const { team } = require('../helpers/dataLoaders')
 
 module.exports = {
   typeDefs: gql`
+    input TeamstatsFilter {
+      season: String
+      team: String
+    }
+
+    input TeamstatsOrderBy {
+      column: String
+      order: String
+    }
+
     type Teamstats {
       season: String!
       team: Team
@@ -26,7 +36,10 @@ module.exports = {
       shotsagainst: Int
     }
     extend type Query {
-      teamstats(season: String!): [Teamstats]
+      teamstats(
+        filter: TeamstatsFilter!
+        orderBy: [TeamstatsOrderBy]
+      ): [Teamstats]
     }
   `,
   resolvers: {
@@ -34,8 +47,19 @@ module.exports = {
       team: (parent) => team.load(parent.teamid)
     },
     Query: {
-      teamstats: async (_, args) =>
-        db('teamstats').where('season', args.season).select()
+      teamstats: async (_, args) => {
+        const filter = {}
+        if (args.filter.season) {
+          filter.season = args.filter.season
+        }
+        if (args.filter.team) {
+          filter.teamid = args.filter.team
+        }
+        return await db('teamstats')
+          .where(filter)
+          .orderBy(args.orderBy || 'teamid')
+          .select()
+      }
     }
   }
 }
