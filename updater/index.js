@@ -5,6 +5,7 @@ const games = require('./games')
 const schedule = require('./games/schedule')
 const playerRosterData = require('./player/rosterData')
 const playerVitalsData = require('./player/vitalsData')
+const playerBinaryData = require('./player/binaryData')
 const playerStats = require('./player/stats')
 const streaks = require('./player/streaks')
 
@@ -12,6 +13,7 @@ module.exports = {
   teams,
   playerRosterData,
   playerVitalsData,
+  playerBinaryData,
   schedule,
   games,
   playerStats,

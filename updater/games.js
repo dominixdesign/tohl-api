@@ -564,8 +564,6 @@ module.exports = {
       gameNumber = parseInt(gameNumber) + 5
     } while (gameExists)
 
-    console.log(teamstats)
-
     // log('insert lineup')
     if (insertLineup.length > 0) {
       await db('lineup')
