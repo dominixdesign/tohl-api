@@ -10,6 +10,7 @@ module.exports = {
           const msg = error.message
           error.message = {
             isAdmin,
+            msg,
             toString: () => msg
           }
         })

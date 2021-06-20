@@ -9,11 +9,6 @@ module.exports = {
       team: String
     }
 
-    input TeamstatsOrderBy {
-      column: String
-      order: String
-    }
-
     type Teamstats {
       season: String!
       team: Team
@@ -36,10 +31,7 @@ module.exports = {
       shotsagainst: Int
     }
     extend type Query {
-      teamstats(
-        filter: TeamstatsFilter!
-        orderBy: [TeamstatsOrderBy]
-      ): [Teamstats]
+      teamstats(filter: TeamstatsFilter!, orderBy: [OrderBy]): [Teamstats]
     }
   `,
   resolvers: {
