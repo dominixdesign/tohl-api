@@ -16,6 +16,16 @@ module.exports = {
       GM
     }
 
+    input OrderBy {
+      column: String
+      order: String
+    }
+
+    input Limit {
+      limit: Int
+      offset: Int
+    }
+
     type Query {
       roles: [Role]
     }
