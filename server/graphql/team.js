@@ -12,6 +12,8 @@ module.exports = {
       teamid: String!
       season: String
       teamsim: String
+      conference: String
+      divivison: String
       manager: Manager
       full_name: String
       roster(season: ID!): [Player]

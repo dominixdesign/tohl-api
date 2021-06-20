@@ -7,6 +7,8 @@ module.exports = {
     input TeamstatsFilter {
       season: String
       team: String
+      division: String
+      conference: String
     }
 
     type Teamstats {
@@ -39,17 +41,31 @@ module.exports = {
       team: (parent) => team.load(parent.teamid)
     },
     Query: {
-      teamstats: async (_, args) => {
-        const filter = {}
-        if (args.filter.season) {
-          filter.season = args.filter.season
+      teamstats: async (_, { filter, orderBy }) => {
+        const where = {}
+        if (filter.season) {
+          where['teamstats.season'] = filter.season
         }
-        if (args.filter.team) {
-          filter.teamid = args.filter.team
+        if (filter.team) {
+          where.teamid = filter.team
+        }
+        if (filter.division) {
+          where['team.division'] = filter.division
+        }
+        if (filter.conference) {
+          where['team.conference'] = filter.conference
         }
         return await db('teamstats')
-          .where(filter)
-          .orderBy(args.orderBy || 'teamid')
+          .where(where)
+          .join(
+            'team',
+            function () {
+              this.on('team.teamid', '=', 'teamstats.teamid')
+              this.on('team.season', '=', 'teamstats.season')
+            },
+            'left'
+          )
+          .orderBy(orderBy || 'teamid')
           .select()
       }
     }
