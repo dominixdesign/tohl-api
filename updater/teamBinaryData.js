@@ -1,6 +1,6 @@
 const loadBinaryFHLFile = require('../lib/filesystem/loadBinaryFHLFile')
 const detectSeason = require('../lib/detectSeason')
-// const db = require('../server/helpers/db')
+const db = require('../server/helpers/db')
 const log = require('../server/helpers/logger')
 
 const cleaner = (s) =>
@@ -10,6 +10,17 @@ const cleaner = (s) =>
     .replace(/[\x00]/g, '')
     .trim()
 
+const updateIfNull = async (field, value, teamid, season) =>
+  db('team')
+    .update(field, value)
+    .where(function () {
+      this.whereNull(field).orWhere(field, '=', '')
+    })
+    .where({
+      teamid,
+      season
+    })
+
 module.exports = {
   run: async () => {
     const season = detectSeason()
@@ -17,32 +28,23 @@ module.exports = {
 
     let rawBinary = loadBinaryFHLFile('.tms')
     let simId = 0
-    const updateTeam = {}
 
     for (let i = 0; i < rawBinary.length; i += 254) {
       const data = rawBinary.slice(i, i + 255)
-      const teamsim = cleaner(data.slice(0, 10)).toLowerCase()
-      const gm = cleaner(data.slice(10, 55))
       const id = cleaner(data.slice(61, 64)).toLowerCase()
       const rink = cleaner(data.slice(64, 95))
       const coach = cleaner(data.slice(103, 125))
 
-      if (!updateTeam[teamsim]) {
-        updateTeam[teamsim] = {
-          id,
-          teamsim,
-          season,
-          simId,
-          gm,
-          rink,
-          coach
-        }
-      }
+      await updateIfNull('rink', rink, id, season)
+      await updateIfNull('coach', coach, id, season)
+
+      await db('team').update('simid', simId).where({
+        teamid: id,
+        season
+      })
+
       simId++
     }
-
-    console.log(updateTeam)
-
     log(`### ${season} ### DONE ### TEAM BINARY DATA ###`)
   }
 }
