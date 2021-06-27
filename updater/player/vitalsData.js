@@ -15,8 +15,8 @@ const playerRowPattern = new RegExp(
     '(?<heightf>[0-9]{1})',
     ' ft ',
     '(?<heighti>[0-9 ]{2})  ',
-    '(?<weight>[0-9]{3})',
-    ' lbs ',
+    '(?<weight>[0-9]{1,3})',
+    ' lbs +',
     '(?<salary>[0-9 .]{10})   ',
     '(?<contract>[0-9])'
   ].join('')
@@ -54,13 +54,12 @@ module.exports = {
               number
             } = playerData.groups
             rookie = rookie === '*' ? true : false
-            salary = salary.replace('.', '')
+            salary = salary.replace(/[.]+/g, '')
             weight = Math.round(parseInt(weight) * 0.45359237)
             const height = Math.round(
               parseInt(heightf) * 30.48 + parseInt(heighti) * 2.54
             )
             const playerId = generatePlayerId(playerData.groups.name)
-
             insertsPlayer.push({
               id: playerId,
               height,
