@@ -1,0 +1,85 @@
+const { gql, UserInputError } = require('apollo-server-express'),
+  db = require('../helpers/db'),
+  generateToken = require('../helpers/generateToken'),
+  refreshTokenHandler = require('../helpers/refreshTokenHandler'),
+  jwt = require('jsonwebtoken'),
+  bcrypt = require('bcrypt')
+
+module.exports = {
+  typeDefs: gql`
+    type Auth {
+      access_token: String
+      refresh_token: String
+    }
+    extend type Mutation {
+      login(username: String!, password: String!): Auth
+      token(refresh_token: String!): Auth
+    }
+  `,
+  resolvers: {
+    Mutation: {
+      login: async (_, { username, password }) => {
+        try {
+          const user = await db('manager')
+            .where({
+              mail: username
+            })
+            .first('password', 'username', 'mail', 'roles', 'id')
+
+          if (user && bcrypt.compareSync(password, user.password)) {
+            const accessToken = generateToken.access({
+              username: user.username,
+              mail: user.mail,
+              roles: user.roles.split(',') || null,
+              userid: user.id
+            })
+            const refreshToken = generateToken.refresh({
+              username: user.username,
+              mail: user.mail,
+              roles: user.roles.split(',') || null,
+              userid: user.id
+            })
+
+            return {
+              access_token: accessToken,
+              refresh_token: refreshToken
+            }
+          } else {
+            throw new UserInputError('invalid user credentials')
+          }
+        } catch (e) {
+          throw new UserInputError('invalid user credentials')
+        }
+      },
+      token: async (_, { refresh_token }) => {
+        if (!refresh_token) {
+          throw new UserInputError('token missing')
+        }
+
+        if (!refreshTokenHandler.exists(refresh_token)) {
+          throw new UserInputError('invalid token')
+        }
+
+        let accessToken
+
+        try {
+          const user = jwt.verify(
+            refresh_token,
+            process.env.REFRESH_TOKEN_SECRET
+          )
+          accessToken = generateToken.access({
+            username: user.username,
+            roles: user.roles,
+            mail: user.mail,
+            userid: user.userid
+          })
+          return {
+            access_token: accessToken
+          }
+        } catch (err) {
+          throw new UserInputError('invalid token')
+        }
+      }
+    }
+  }
+}

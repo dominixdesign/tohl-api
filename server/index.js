@@ -3,17 +3,18 @@ require('dotenv').config()
 const express = require('express')
 const { ApolloServer } = require('apollo-server-express')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
-const bodyParser = require('body-parser')
-const authMiddleware = require('./middleware/auth')
 const jwt = require('jsonwebtoken')
 const AuhtDirective = require('./middleware/authDirective')
 const ownTeamDirective = require('./middleware/ownTeamDirective')
 const managedTeamDirective = require('./middleware/managedTeamDirective')
 const db = require('./helpers/db')
 
+const allowedErrors = ['BAD_USER_INPUT']
+
 // modules
 const modules = [
   'global',
+  'auth',
   'manager',
   'team',
   'player',
@@ -31,7 +32,13 @@ modules.forEach((module) => {
 const server = new ApolloServer({
   formatError: (err) => {
     // TODO: hier einbauen, dass mysql fehler nicht durchgereicht werden
-    if (err.message.isAdmin) {
+    if (
+      err.message.isAdmin ||
+      (err &&
+        err.extensions &&
+        err.extensions.code &&
+        allowedErrors.includes(err.extensions.code))
+    ) {
       return err
     } else {
       console.log(err)
@@ -85,27 +92,5 @@ const server = new ApolloServer({
 
 const app = express()
 server.applyMiddleware({ app })
-app.use(bodyParser.json())
-app.use(require('./routes'))
-
-app.get('/', (req, res) => {
-  return res.send('Received a GET HTTP method after the restart')
-})
-
-app.get('/backend', authMiddleware, (req, res) => {
-  return res.send('Received a GET HTTP method after the restart')
-})
-
-app.post('/', (req, res) => {
-  return res.send('Received a POST HTTP method')
-})
-
-app.put('/', (req, res) => {
-  return res.send('Received a PUT HTTP method')
-})
-
-app.delete('/', (req, res) => {
-  return res.send('Received a DELETE HTTP method')
-})
 
 app.listen(3000, () => console.log(`Example app listening on port 3000!`))
