@@ -12,13 +12,13 @@ module.exports = {
       refresh_token: String
     }
     extend type Mutation {
-      login(username: String!, password: String!): Auth
+      login(username: String!, password: String!, refresh: Boolean): Auth
       token(refresh_token: String!): Auth
     }
   `,
   resolvers: {
     Mutation: {
-      login: async (_, { username, password }) => {
+      login: async (_, { username, password, refresh }) => {
         try {
           const user = await db('manager')
             .where({
@@ -27,23 +27,24 @@ module.exports = {
             .first('password', 'username', 'mail', 'roles', 'id')
 
           if (user && bcrypt.compareSync(password, user.password)) {
-            const accessToken = generateToken.access({
-              username: user.username,
-              mail: user.mail,
-              roles: user.roles.split(',') || null,
-              userid: user.id
-            })
-            const refreshToken = generateToken.refresh({
-              username: user.username,
-              mail: user.mail,
-              roles: user.roles.split(',') || null,
-              userid: user.id
-            })
-
-            return {
-              access_token: accessToken,
-              refresh_token: refreshToken
+            const returnObj = {
+              access_token: generateToken.access({
+                username: user.username,
+                mail: user.mail,
+                roles: user.roles.split(',') || null,
+                userid: user.id
+              })
             }
+            if (refresh) {
+              returnObj['refresh_token'] = generateToken.refresh({
+                username: user.username,
+                mail: user.mail,
+                roles: user.roles.split(',') || null,
+                userid: user.id
+              })
+            }
+
+            return returnObj
           } else {
             throw new UserInputError('invalid user credentials')
           }
