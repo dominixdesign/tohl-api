@@ -19,7 +19,8 @@ const modules = [
   'team',
   'player',
   'playerstats',
-  'teamstats'
+  'teamstats',
+  'game'
 ]
 let _typeDefs = []
 let _resolvers = []
