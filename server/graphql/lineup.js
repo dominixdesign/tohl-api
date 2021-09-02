@@ -1,0 +1,63 @@
+const { gql } = require('apollo-server-express')
+const db = require('../helpers/db')
+const { team, player } = require('../helpers/dataLoaders')
+
+module.exports = {
+  typeDefs: gql`
+    input LineupFilter {
+      team: String
+      player: String
+      gameday: Int
+      season: String
+    }
+
+    type Lineup {
+      season: String!
+      game: Int!
+      player: Player
+      team: Team
+      goals: Int
+      assists: Int
+      points: Int
+      plusminus: Int
+      pim: Int
+      shots: Int
+      hits: Int
+      icetime: Int
+      fightswon: Int
+      fightslose: Int
+      fightsdraw: Int
+      injured: String
+      ejected: String
+      minutes: Int
+      saves: Int
+      shotsfaced: Int
+      goalsagainst: Int
+      star: String
+      line: String
+    }
+    extend type Query {
+      lineup(
+        filter: LineupFilter!
+        orderBy: [OrderBy]
+        limit: Int
+        offset: Int
+      ): [Lineup]
+    }
+  `,
+  resolvers: {
+    Lineup: {
+      team: (parent) => team.load(parent.team),
+      player: (parent) => player.load(parent.player)
+    },
+    Query: {
+      lineup: async (_, { filter, orderBy, limit, offset }) =>
+        db('lineup')
+          .where(filter)
+          .orderBy(orderBy || 'player')
+          .limit(limit || 100)
+          .offset(offset || 0)
+          .select()
+    }
+  }
+}
