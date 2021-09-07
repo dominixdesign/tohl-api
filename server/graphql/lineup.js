@@ -8,6 +8,7 @@ module.exports = {
       team: String
       player: String
       gameday: Int
+      game: Int
       season: String
     }
 
@@ -39,6 +40,7 @@ module.exports = {
     extend type Query {
       lineup(
         filter: LineupFilter!
+        where: [[String]]
         orderBy: [OrderBy]
         limit: Int
         offset: Int
@@ -51,9 +53,18 @@ module.exports = {
       player: (parent) => player.load(parent.player)
     },
     Query: {
-      lineup: async (_, { filter, orderBy, limit, offset }) =>
+      lineup: async (_, { filter, orderBy, limit, offset, where }) =>
         db('lineup')
-          .where(filter)
+          .modify((queryBuilder) => {
+            if (filter) {
+              queryBuilder.where(filter)
+            }
+            if (where) {
+              for (const entry of where) {
+                queryBuilder.where(entry[0], entry[1], entry[2])
+              }
+            }
+          })
           .orderBy(orderBy || 'player')
           .limit(limit || 100)
           .offset(offset || 0)

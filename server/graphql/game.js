@@ -1,6 +1,7 @@
 const { gql } = require('apollo-server-express')
 const db = require('../helpers/db')
 const { team } = require('../helpers/dataLoaders')
+const { resolvers } = require('./lineup')
 // const { manager, player } = require('../helpers/dataLoaders')
 
 module.exports = {
@@ -29,6 +30,7 @@ module.exports = {
       shotshome: Int
       shotsaway: Int
       gamedata: String
+      lineup(where: [[String]], orderBy: [OrderBy]): [Lineup]
     }
     extend type Query {
       games(season: String!, filter: GameFilter): [Game]
@@ -43,7 +45,12 @@ module.exports = {
       home: (parent) => team.load(parent.home),
       away: (parent) => team.load(parent.away),
       winner: (parent) => parent.winner && team.load(parent.winner),
-      loser: (parent) => parent.loser && team.load(parent.loser)
+      loser: (parent) => parent.loser && team.load(parent.loser),
+      lineup: (parent, args) =>
+        resolvers.Query.lineup(undefined, {
+          ...args,
+          filter: { season: parent.season, game: parent.game }
+        })
     },
     Query: {
       games: async (_, args) =>
