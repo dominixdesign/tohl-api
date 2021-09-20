@@ -1,7 +1,7 @@
-const loadBinaryFHLFile = require('../lib/filesystem/loadBinaryFHLFile')
-const detectSeason = require('../lib/detectSeason')
-const db = require('../server/helpers/db')
-const log = require('../server/helpers/logger')
+const loadBinaryFHLFile = require('../../lib/filesystem/loadBinaryFHLFile')
+const detectSeason = require('../../lib/detectSeason')
+const db = require('../../server/helpers/db')
+const log = require('../../server/helpers/logger')
 
 const cleaner = (s) =>
   s

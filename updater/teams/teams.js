@@ -1,6 +1,6 @@
-const loadFHLFile = require('../lib/filesystem/loadFHLFile')
-const detectSeason = require('../lib/detectSeason')
-const db = require('../server/helpers/db')
+const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
+const detectSeason = require('../../lib/detectSeason')
+const db = require('../../server/helpers/db')
 
 module.exports = {
   run: () => {
