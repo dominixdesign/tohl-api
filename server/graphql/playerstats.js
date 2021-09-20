@@ -17,7 +17,8 @@ module.exports = {
       games: Int
       goals: Int
       assists: Int
-      pointsplusminus: Int
+      points: Int
+      plusminus: Int
       pim: Int
       shots: Int
       hits: Int
@@ -46,7 +47,7 @@ module.exports = {
 
     extend type Query {
       playerstats(
-        filter: PlayerstatsFilter!
+        where: JSON
         orderBy: [OrderBy]
         limit: Int
         offset: Int
@@ -59,19 +60,23 @@ module.exports = {
       player: (parent) => player.load(parent.player)
     },
     Query: {
-      playerstats: async (_, { filter, orderBy, limit, offset }) => {
-        const where = {}
-        if (filter.season) {
-          where.season = filter.season
-        }
-        if (filter.team) {
-          where.team = filter.team
-        }
-        if (filter.player) {
-          where.player = filter.player
-        }
+      playerstats: async (_, { orderBy, limit, offset, where }) => {
         return await db('playerstats')
-          .where(filter)
+          .join(
+            'playerdata',
+            function () {
+              this.on('playerdata.playerid', '=', 'playerstats.player')
+              this.on('playerdata.season', '=', 'playerstats.season')
+            },
+            'left'
+          )
+          .modify((queryBuilder) => {
+            if (where) {
+              for (const entry of JSON.parse(where)) {
+                queryBuilder.where(entry[0], entry[1], entry[2])
+              }
+            }
+          })
           .orderBy(orderBy || 'player')
           .limit(limit || 100)
           .offset(offset || 0)

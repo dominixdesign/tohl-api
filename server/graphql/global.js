@@ -1,5 +1,6 @@
 const { gql } = require('apollo-server-express')
 const { GraphQLScalarType } = require('graphql')
+const GraphQLJSON = require('graphql-type-json')
 const { Kind } = require('graphql/language')
 
 module.exports = {
@@ -9,6 +10,7 @@ module.exports = {
     directive @managedTeam on FIELD_DEFINITION
 
     scalar Date
+    scalar JSON
 
     enum Role {
       ADMIN
@@ -50,6 +52,7 @@ module.exports = {
         }
         return null
       }
-    })
+    }),
+    JSON: GraphQLJSON
   }
 }
