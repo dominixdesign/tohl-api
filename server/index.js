@@ -8,6 +8,7 @@ const AuhtDirective = require('./middleware/authDirective')
 const ownTeamDirective = require('./middleware/ownTeamDirective')
 const managedTeamDirective = require('./middleware/managedTeamDirective')
 const db = require('./helpers/db')
+const createDataloders = require('./helpers/dataLoaders')
 
 const allowedErrors = ['BAD_USER_INPUT']
 
@@ -83,6 +84,7 @@ const server = new ApolloServer({
     }
     return {
       user,
+      loader: createDataloders(),
       ownTeam: validTeams
         .filter((t) => t.type === 'OWNER')
         .map((t) => t.teamid)
