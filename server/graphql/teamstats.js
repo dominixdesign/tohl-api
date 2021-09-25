@@ -1,6 +1,5 @@
 const { gql } = require('apollo-server-express')
 const db = require('../helpers/db')
-const { team } = require('../helpers/dataLoaders')
 
 module.exports = {
   typeDefs: gql`
@@ -38,7 +37,7 @@ module.exports = {
   `,
   resolvers: {
     Teamstats: {
-      team: (parent) => team.load(parent.teamid)
+      team: (parent, _, { loader: { team } }) => team.load(parent.teamid)
     },
     Query: {
       teamstats: async (_, { filter, orderBy }) => {

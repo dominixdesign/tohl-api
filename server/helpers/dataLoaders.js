@@ -1,7 +1,7 @@
 const DataLoader = require('dataloader')
 const db = require('./db')
 
-module.exports = {
+module.exports = () => ({
   manager: new DataLoader((ids) =>
     db
       .table('manager')
@@ -23,4 +23,4 @@ module.exports = {
       .select()
       .then((rows) => ids.map((id) => rows.find((x) => x.id === id)))
   )
-}
+})

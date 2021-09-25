@@ -1,6 +1,5 @@
 const { gql, UserInputError } = require('apollo-server-express')
 const db = require('../helpers/db')
-const { manager, team } = require('../helpers/dataLoaders')
 
 module.exports = {
   typeDefs: gql`
@@ -45,7 +44,7 @@ module.exports = {
   `,
   resolvers: {
     Manager: {
-      teams: async (parent) => {
+      teams: async (parent, _, { loader: { team } }) => {
         const teams = await db('manager_x_team')
           .select('teamid')
           .where('managerid', parent.id)
@@ -54,8 +53,9 @@ module.exports = {
       }
     },
     Managerterm: {
-      manager: (parent) => manager.load(parent.managerid),
-      team: (parent) => team.load(parent.teamid)
+      manager: (parent, _, { loader: { manager } }) =>
+        manager.load(parent.managerid),
+      team: (parent, _, { loader: { team } }) => team.load(parent.teamid)
     },
     Query: {
       currentManager: async (_parent, _args, { user }) => {
