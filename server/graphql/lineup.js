@@ -33,6 +33,7 @@ module.exports = {
       saves: Int
       shotsfaced: Int
       goalsagainst: Int
+      shutout: Int
       star: String
       line: String
     }

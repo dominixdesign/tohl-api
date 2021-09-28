@@ -38,7 +38,10 @@ module.exports = {
       minutes: Int
       saves: Int
       shotsfaced: Int
+      savepercentage: Float
+      gaa: Float
       goalsagainst: Int
+      shutout: Int
       first_stars: Int
       second_stars: Int
       third_stars: Int
@@ -72,14 +75,25 @@ module.exports = {
           .modify((queryBuilder) => {
             if (where) {
               for (const entry of JSON.parse(where)) {
-                queryBuilder.where(entry[0], entry[1], entry[2])
+                if (entry[2].includes('SELECT')) {
+                  queryBuilder.where(
+                    db.raw(`${entry[0]} ${entry[1]} ${entry[2]}`)
+                  )
+                } else {
+                  queryBuilder.where(entry[0], entry[1], entry[2])
+                }
               }
             }
           })
           .orderBy(orderBy || 'player')
           .limit(limit || 100)
           .offset(offset || 0)
-          .select()
+          .debug(true)
+          .select([
+            '*',
+            db.raw('ROUND((saves / shotsfaced)*100, 2) as savepercentage'),
+            db.raw('ROUND(goalsagainst / (minutes / 60),2) as gaa')
+          ])
       }
     }
   }

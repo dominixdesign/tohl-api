@@ -493,6 +493,9 @@ module.exports = {
               }
             } else {
               goalie.minutes = gameTime
+              if (goalie.goalsagainst === 0) {
+                goalie.shutout = 1
+              }
             }
           }
         }

@@ -73,6 +73,7 @@ module.exports = {
       .select({ ppg, ppa, shg, sha })
       .sum('minutes as minutes')
       .sum('saves as saves')
+      .sum('shutout as shutout')
       .sum('shotsfaced as shotsfaced')
       .sum('goalsagainst as goalsagainst')
       .count('ejected as ejections')
