@@ -7,18 +7,25 @@ module.exports = {
       teamid: String
       teamsim: String
     }
+    input TeamSearch {
+      season: String
+      teamid: String
+      divivison: String
+      conference: String
+      manager: String
+    }
     type Team {
       teamid: String!
       season: String
       teamsim: String
       conference: String
-      divivison: String
+      division: String
       manager: Manager
       full_name: String
       roster(season: ID!): [Player]
     }
     extend type Query {
-      teams: [Team]
+      teams(filter: TeamSearch!): [Team]
       findTeams(filter: TeamFilter): [Team]
       team(teamid: ID!): Team
       myTeam: Team
@@ -42,7 +49,7 @@ module.exports = {
         )
     },
     Query: {
-      teams: async () => db('team').select(),
+      teams: async (_, { filter }) => db('team').where(filter).select(),
       findTeams: async (_, args) => db('team').where(args.filter).select(),
       team: async (_, args) => db('team').where('teamid', args.teamid).select(),
       myTeam: async (_, _args, { ownTeam }) =>
