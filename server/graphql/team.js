@@ -27,7 +27,7 @@ module.exports = {
     extend type Query {
       teams(filter: TeamSearch!): [Team]
       findTeams(filter: TeamFilter): [Team]
-      team(teamid: ID!): Team
+      team(teamid: ID!, season: ID!): Team
       myTeam: Team
       teamterms: [Managerterm]
     }
@@ -39,10 +39,10 @@ module.exports = {
     Team: {
       manager: (parent, _, { loader: { manager } }) =>
         manager.load(parent.manager),
-      roster: async (parent, { season }, { loader: { player } }) =>
+      roster: async ({ teamsim }, { season }, { loader: { player } }) =>
         player.loadMany(
           await db('playerdata')
-            .where('teamid', parent.teamsim)
+            .where('teamid', teamsim)
             .where('season', season)
             .select('playerid')
             .then((rows) => rows.map((r) => r.playerid))
@@ -51,7 +51,8 @@ module.exports = {
     Query: {
       teams: async (_, { filter }) => db('team').where(filter).select(),
       findTeams: async (_, args) => db('team').where(args.filter).select(),
-      team: async (_, args) => db('team').where('teamid', args.teamid).select(),
+      team: async (_, { teamid, season }) =>
+        db('team').where('teamid', teamid).where('season', season).first(),
       myTeam: async (_, _args, { ownTeam }) =>
         db('team').where('teamid', ownTeam).first(),
       teamterms: async (_, _args, { ownTeam }) =>

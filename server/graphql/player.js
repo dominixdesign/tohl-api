@@ -49,6 +49,7 @@ module.exports = {
     }
     extend type Query {
       players: [Player]
+      roster(teamsim: String!, season: ID!): [Player]
       findPlayers(filter: PlayerFilter): [Player]
       player(id: ID!): Player
     }
@@ -64,6 +65,18 @@ module.exports = {
     },
     Query: {
       players: async () => db('player').select(),
+      roster: async (_, { season, teamsim }) =>
+        db('player')
+          .innerJoin(
+            'playerdata',
+            function () {
+              this.on('playerdata.playerid', '=', 'player.id')
+            },
+            'left'
+          )
+          .where('playerdata.teamid', teamsim)
+          .where('playerdata.season', season)
+          .select(),
       findPlayers: async (_, args) => db('player').where(args.filter).select(),
       player: async (_, args) => db('player').where('id', args.id).first()
     }
