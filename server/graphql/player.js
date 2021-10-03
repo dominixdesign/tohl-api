@@ -12,6 +12,7 @@ module.exports = {
       season: String!
       team: Team
       number: Int
+      roster: String
       pos: String
       cd: String
       ij: String

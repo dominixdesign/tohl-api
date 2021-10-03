@@ -48,7 +48,8 @@ module.exports = {
       if (teamnameRegex) {
         const teamId = teamnameRegex[1].toLowerCase()
         let players = html.split('\r\n')
-        players.map((playerrow) => {
+        let roster
+        for (const playerrow of players) {
           let playerData = playerRowPattern.exec(playerrow)
           if (playerData) {
             for (const [key, value] of Object.entries(playerData.groups)) {
@@ -68,13 +69,20 @@ module.exports = {
             })
             insertsPlayerdata.push({
               playerid: playerId,
+              roster,
               season,
               teamid: teamId,
               ...seasonData
             })
-            mergeFields = [...Object.keys(seasonData), 'teamid']
+            mergeFields = [...Object.keys(seasonData), 'teamid', 'roster']
+          } else {
+            if (playerrow.indexOf('Pro Roster') > 0) {
+              roster = 'pro'
+            } else if (playerrow.indexOf('Farm Roster') > 0) {
+              roster = 'farm'
+            }
           }
-        })
+        }
       }
     }
     if (insertsPlayer.length > 0) {
