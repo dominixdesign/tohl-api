@@ -26,6 +26,7 @@ function unzipSeason(season) {
     .pipe(unzipper.Extract({ path: `./import-data/${season}` }))
     .on('close', () => {
       console.log(`Season "${season}" unpacked`)
+      fs.unlinkSync('./import-data/upload.zip')
       runAll(season)
     })
 }
