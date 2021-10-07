@@ -102,5 +102,6 @@ app.use(
     createParentPath: true
   })
 )
+app.use(require('./routes/upload'))
 
 app.listen(3000, () => console.log(`Example app listening on port 3000!`))

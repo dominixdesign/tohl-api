@@ -1,8 +1,9 @@
 const express = require('express'),
   router = express.Router()
 
-router.post('/', async (req, res) => {
+router.post('/upload', async (req, res) => {
   try {
+    console.log(req.files)
     if (!req.files) {
       res.send({
         status: false,
