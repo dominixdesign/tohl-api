@@ -22,32 +22,6 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      
-      - name: Download Export File
-        uses: carlosperate/download-file-action@v1.0.3
-        id: download-poetry
-        with:
-            file-url: ${{ secrets.TOHL_FILE_URL }}
-            file-name: 'tohl_data.zip'
-            location: './upload'
-      - name: Decompress
-        uses: TonyBogdanov/zip@1.0
-        with:
-          args: unzip -qq ${{ steps.download-poetry.outputs.file-path }} -d ./import-data
-      - name: Install dependencies
-        run: npm i
-
-      - name: Generate
-        run: node index.js
-        
-      - name: Add & Commit
-        uses: EndBug/add-and-commit@v7.1.0
-        with:
-          add: 'api'
-          message: 'Automatic api update'
-
       - name: Webhook Action
         uses: joelwmale/webhook-action@2.1.0
         with:
