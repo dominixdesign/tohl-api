@@ -1,6 +1,7 @@
 require('dotenv').config()
 
 const express = require('express')
+const fileUpload = require('express-fileupload')
 const { ApolloServer } = require('apollo-server-express')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
 const jwt = require('jsonwebtoken')
@@ -96,5 +97,10 @@ const server = new ApolloServer({
 
 const app = express()
 server.applyMiddleware({ app })
+app.use(
+  fileUpload({
+    createParentPath: true
+  })
+)
 
 app.listen(3000, () => console.log(`Example app listening on port 3000!`))
