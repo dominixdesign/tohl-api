@@ -1,7 +1,34 @@
+const chokidar = require('chokidar')
+const unzipper = require('unzipper')
 const updater = require('./updater')
 const { init } = require('./lib/team')
 const fs = require('fs')
+let sleep = require('util').promisify(setTimeout)
 let runOnly
+
+chokidar.watch('./import-data/upload.zip').on('change', async (addedFile) => {
+  await sleep(500)
+  fs.createReadStream(addedFile)
+    .pipe(unzipper.Parse())
+    .on('entry', function (entry) {
+      const fileName = entry.path
+      if (fileName.includes('.ros')) {
+        const season = fileName.split('.')[0]
+        console.log(`Found Season "${season}". Start unpacking it`)
+        unzipSeason(season)
+      }
+      entry.autodrain()
+    })
+})
+
+function unzipSeason(season) {
+  fs.createReadStream('./import-data/upload.zip')
+    .pipe(unzipper.Extract({ path: `./import-data/${season}` }))
+    .on('close', () => {
+      console.log(`Season "${season}" unpacked`)
+      runAll(season)
+    })
+}
 
 try {
   if (fs.existsSync('./.run-only')) {
@@ -16,14 +43,11 @@ try {
   // error
 }
 
-const runAll = async () => {
-  await init()
+const runAll = async (season) => {
+  await init(season)
   for (const update of Object.keys(updater)) {
     if (!runOnly || (runOnly && runOnly === update)) {
       await updater[update].run()
     }
   }
-  process.exit()
 }
-
-runAll()
