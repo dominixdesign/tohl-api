@@ -564,7 +564,7 @@ module.exports = {
         }
       }
 
-      gameNumber = parseInt(gameNumber) + 5
+      gameNumber = parseInt(gameNumber) + 1
     } while (gameExists)
 
     // log('insert lineup')
