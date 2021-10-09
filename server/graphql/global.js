@@ -2,6 +2,7 @@ const { gql } = require('apollo-server-express')
 const { GraphQLScalarType } = require('graphql')
 const GraphQLJSON = require('graphql-type-json')
 const { Kind } = require('graphql/language')
+const db = require('../helpers/db')
 
 module.exports = {
   typeDefs: gql`
@@ -30,6 +31,7 @@ module.exports = {
 
     type Query {
       roles: [Role]
+      seasons: [String]
     }
 
     type Mutation {
@@ -53,6 +55,13 @@ module.exports = {
         return null
       }
     }),
-    JSON: GraphQLJSON
+    JSON: GraphQLJSON,
+    Query: {
+      seasons: async () =>
+        db('team')
+          .groupBy('season')
+          .select('season')
+          .then((rows) => rows.map((r) => r.season))
+    }
   }
 }
