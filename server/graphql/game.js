@@ -99,14 +99,15 @@ module.exports = {
       lastGameday: async (_, args) =>
         db('game')
           .where('season', args.season)
+          .debug()
           .where(function () {
             this.where(
               'gameday',
               db('game')
                 .where('season', args.season)
-                .where('goalshome', null)
-                .where('goalsaway', null)
-                .select(db.raw('min(`gameday`) - 1 as lastgameday'))
+                .whereNotNull('goalshome')
+                .whereNotNull('goalsaway')
+                .select(db.raw('max(`gameday`) as lastgameday'))
                 .first()
             )
           })
