@@ -19,6 +19,16 @@ const gamePattern = new RegExp(
   ].join('')
 )
 
+const schedulePattern = new RegExp(
+  [
+    '(?<gamenumber>[0-9]+)',
+    '[ ]*',
+    '(?<away>[A-Z]+)',
+    ' at ',
+    '(?<home>[A-Z]+)'
+  ].join('')
+)
+
 const gameDayPattern = new RegExp('Day (?<gameday>[0-9]+)')
 
 module.exports = {
@@ -128,6 +138,20 @@ module.exports = {
         const dayData = gameDayPattern.exec(entry)
         if (dayData) {
           gameday = dayData.groups.gameday
+        } else {
+          const gameData = schedulePattern.exec(entry)
+          if (gameData) {
+            const { groups } = gameData
+            const home = team(groups.home)
+            const away = team(groups.away)
+            gameInsert.push({
+              season,
+              game: groups.gamenumber,
+              gameday,
+              home,
+              away
+            })
+          }
         }
       }
     }

@@ -1,6 +1,7 @@
 const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
 const generatePlayerId = require('../../lib/playerId')
 const detectSeason = require('../../lib/detectSeason')
+const { team } = require('../../lib/team')
 const db = require('../../server/helpers/db')
 const log = require('../../server/helpers/logger')
 
@@ -71,7 +72,7 @@ module.exports = {
               playerid: playerId,
               roster,
               season,
-              teamid: teamId,
+              teamid: team(teamId),
               ...seasonData
             })
             mergeFields = [...Object.keys(seasonData), 'teamid', 'roster']
