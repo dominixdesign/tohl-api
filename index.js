@@ -6,20 +6,22 @@ const fs = require('fs')
 let sleep = require('util').promisify(setTimeout)
 let runOnly
 
-chokidar.watch('./import-data/upload.zip').on('change', async (addedFile) => {
-  await sleep(500)
-  fs.createReadStream(addedFile)
-    .pipe(unzipper.Parse())
-    .on('entry', function (entry) {
-      const fileName = entry.path
-      if (fileName.includes('.ros')) {
-        const season = fileName.split('.')[0]
-        console.log(`Found Season "${season}". Start unpacking it`)
-        unzipSeason(season)
-      }
-      entry.autodrain()
-    })
-})
+chokidar
+  .watch('./import-data/upload.zip')
+  .on('change', { atomic: 200 }, async (addedFile) => {
+    await sleep(500)
+    fs.createReadStream(addedFile)
+      .pipe(unzipper.Parse())
+      .on('entry', function (entry) {
+        const fileName = entry.path
+        if (fileName.includes('.ros')) {
+          const season = fileName.split('.')[0]
+          console.log(`Found Season "${season}". Start unpacking it`)
+          unzipSeason(season)
+        }
+        entry.autodrain()
+      })
+  })
 
 function unzipSeason(season) {
   fs.createReadStream('./import-data/upload.zip')

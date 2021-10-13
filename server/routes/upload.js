@@ -3,7 +3,6 @@ const express = require('express'),
 
 router.post('/upload', async (req, res) => {
   try {
-    console.log(req.files)
     if (!req.files) {
       res.send({
         status: false,
