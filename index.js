@@ -7,8 +7,8 @@ let sleep = require('util').promisify(setTimeout)
 let runOnly
 
 chokidar
-  .watch('./import-data/upload.zip')
-  .on('change', { atomic: 200 }, async (addedFile) => {
+  .watch('./import-data/upload.zip', { atomic: 200 })
+  .on('change', async (addedFile) => {
     await sleep(500)
     fs.createReadStream(addedFile)
       .pipe(unzipper.Parse())
