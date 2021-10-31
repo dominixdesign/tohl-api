@@ -64,6 +64,9 @@ module.exports = {
           .where('season', season)
           .first()
     },
+    Playerdata: {
+      team: (parent, _, { loader: { team } }) => team.load(parent.teamid)
+    },
     Query: {
       players: async () => db('player').select(),
       roster: async (_, { season, teamsim }) =>
