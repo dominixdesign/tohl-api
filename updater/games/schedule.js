@@ -168,7 +168,7 @@ module.exports = {
       await db('game')
         .insert(gameInsert)
         .onConflict()
-        .ignore()
+        .merge()
         .then()
         .catch((e) => console.log(e))
     }
