@@ -81,6 +81,8 @@ module.exports = {
     let round = 1
     let gameNumber = 1
     let gameExists = true
+    let gameLastGame = ''
+    let gameThisGame = ''
 
     const insertGoals = []
     const insertGoalies = []
@@ -97,7 +99,9 @@ module.exports = {
         let rawHtmlPLF = false
         do {
           rawHtmlPLF = loadFHLFile(`-R${round}-${gameNumber}`)
-          if (rawHtmlPLF === false && round < 4) {
+          if (rawHtmlPLF === false && gameNumber < Math.pow(2, 4 - round) * 7) {
+            gameNumber++
+          } else if (rawHtmlPLF === false && round < 4) {
             round++
             gameNumber = 1
           } else {
@@ -144,6 +148,14 @@ module.exports = {
         } else if (goals[home].total < goals[away].total) {
           gamewinner = parseInt(goals[home].total) + 1
         }
+
+        // validate game, to check if it is not a duplicate
+        gameThisGame = `${away}at${home}${goals[home].total}${goals[away].total}${shots[home].total}${shots[away].total}`
+        if (gameLastGame === gameThisGame) {
+          gameNumber = parseInt(gameNumber) + 1
+          continue
+        }
+        gameLastGame = gameThisGame
 
         let gameTime = goals[home].total === goals[away].total ? 65 : 60
 
@@ -525,7 +537,7 @@ module.exports = {
 
         updateGame.push({
           season,
-          game: gameNumber,
+          game: gameNumberDB,
           overtimes: periods > 3 ? periods - 3 : null,
           shotshome: gamedata.shots[home].total,
           shotsaway: gamedata.shots[away].total,

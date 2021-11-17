@@ -6,6 +6,11 @@ const log = require('../../server/helpers/logger')
 module.exports = {
   run: async () => {
     const season = detectSeason()
+    const isPlayoff = season.includes('PLF')
+    if (isPlayoff) {
+      log(`___ ${season} ___ SKIP ___ PLAYER PAYMENTS ___`)
+      return
+    }
     log(`### ${season} ### STRT ### PLAYER PAYMENTS ###`)
 
     const gameDays = await db('game')

@@ -5,18 +5,21 @@ const log = require('../../server/helpers/logger')
 const { team } = require('../../lib/team')
 const updateStreak = require('./updateStreak')
 
-const gamePattern = new RegExp(
-  [
-    '> ',
-    '(?<gamenumber>[0-9]+)',
-    '[ ]*',
-    '(?<away>[A-Z]+)',
-    '(?<goalsaway>[0-9 ]*)',
-    '(?<home>[A-Z]+)',
-    '(?<goalshome>[0-9 ]*)',
-    '.[^(]*',
-    '(?<ot>\\(OT\\))*'
-  ].join('')
+const gamePatternArray = [
+  '> ',
+  '(?<gamenumber>[0-9]+)',
+  '[ ]*',
+  '(?<away>[A-Z]+)',
+  '(?<goalsaway>[0-9 ]*)',
+  '(?<home>[A-Z]+)',
+  '(?<goalshome>[0-9 ]*)',
+  '.[^(]*',
+  '(?<ot>\\(OT\\))*'
+]
+const gamePattern = new RegExp(gamePatternArray.join(''))
+
+const gamePOPattern = new RegExp(
+  ['PLF-R(?<round>[1-4])-[0-9]{1,2}.html', ...gamePatternArray].join('')
 )
 
 const schedulePattern = new RegExp(
@@ -30,10 +33,12 @@ const schedulePattern = new RegExp(
 )
 
 const gameDayPattern = new RegExp('Day (?<gameday>[0-9]+)')
+const roundPattern = new RegExp('<round>(?<round>[0-9]+)</round>')
 
 module.exports = {
   run: async () => {
     const season = detectSeason()
+    const isPlayoff = season.includes('PLF')
     log(`### ${season} ### STRT ### SCHEDULE ###`)
 
     const defaultTeamstats = Object.freeze({
@@ -50,17 +55,40 @@ module.exports = {
       streak: ''
     })
 
-    let rawHtml = loadFHLFile('Schedule')
+    let rawHtml = ''
+    if (isPlayoff) {
+      let round = 1
+      let rawHtmlPLF = false
+      do {
+        rawHtmlPLF = loadFHLFile(`-Round${round}-Schedule`)
+        if (rawHtmlPLF) {
+          rawHtml += `<round>${round}</round><BR>` + rawHtmlPLF
+        }
+        round++
+      } while (round <= 4)
+    } else {
+      rawHtml = loadFHLFile('Schedule')
+    }
+
     let gameday = 1
+    let globalRound = 1
     let gameInsert = []
     let teamstats = {}
     for (const entry of rawHtml.split('<BR>')) {
-      const gameData = gamePattern.exec(entry)
+      let gameData
+      if (isPlayoff) {
+        gameData = gamePOPattern.exec(entry)
+      } else {
+        gameData = gamePattern.exec(entry)
+      }
       gamePattern.lastIndex = 0
       if (gameData) {
         const { groups } = gameData
         const home = team(groups.home)
         const away = team(groups.away)
+        if (home === away) {
+          continue
+        }
         const overtimes = groups.ot ? 1 : null
         let winner = null,
           loser = null
@@ -122,10 +150,19 @@ module.exports = {
         teamstats[away].winp =
           teamstats[away].points / 2 / teamstats[away].games
 
+        const gameNumberDB = isPlayoff
+          ? `${groups.round}${groups.gamenumber.toString().padStart(2, '0')}`
+          : groups.gamenumber
+
+        if (isPlayoff) {
+          globalRound = groups.round
+        }
+
         gameInsert.push({
           season,
-          game: groups.gamenumber,
+          game: gameNumberDB,
           gameday,
+          round: isPlayoff ? groups.round : null,
           home,
           away,
           goalshome,
@@ -136,21 +173,30 @@ module.exports = {
         })
       } else {
         const dayData = gameDayPattern.exec(entry)
-        if (dayData) {
-          gameday = dayData.groups.gameday
+        const roundData = roundPattern.exec(entry)
+        if (roundData) {
+          globalRound = roundData.groups.round
+        } else if (dayData) {
+          gameday = isPlayoff
+            ? `${globalRound}${dayData.groups.gameday
+                .toString()
+                .padStart(2, '0')}` //
+            : dayData.groups.gameday
         } else {
-          const gameData = schedulePattern.exec(entry)
-          if (gameData) {
-            const { groups } = gameData
-            const home = team(groups.home)
-            const away = team(groups.away)
-            gameInsert.push({
-              season,
-              game: groups.gamenumber,
-              gameday,
-              home,
-              away
-            })
+          if (entry.indexOf('strike') === -1) {
+            const gameData = schedulePattern.exec(entry)
+            if (gameData) {
+              const { groups } = gameData
+              const home = team(groups.home)
+              const away = team(groups.away)
+              gameInsert.push({
+                season,
+                game: groups.gamenumber,
+                gameday,
+                home,
+                away
+              })
+            }
           }
         }
       }
