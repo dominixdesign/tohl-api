@@ -41,8 +41,8 @@ const penaltiesRowPattern = new RegExp(
 
 const rosterPattern = new RegExp(
   [
-    "(?<player>[a-zA-Z- .']{21})",
-    '(?<goals>[0-9 ]{3})',
+    "(?<player>[a-zA-Z- .']{22})",
+    '(?<goals>[0-9 ]{2})',
     '(?<assists>[0-9 ]{3})',
     '(?<points>[0-9 ]{3})',
     '(?<plusminus>[0-9-+Even ]{6})',
