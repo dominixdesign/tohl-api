@@ -45,6 +45,7 @@ module.exports = {
       height: Int
       weight: Int
       hand: String
+      nation: String
       data: [Playerdata]
       seasondata(season: ID): Playerdata
     }
