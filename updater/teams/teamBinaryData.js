@@ -3,21 +3,12 @@ const { detectSeason, cleaner } = require('../../lib/functions')
 const db = require('../../server/helpers/db')
 const log = require('../../server/helpers/logger')
 
-const updateIfNull = async (field, value, teamid, season) =>
-  db('team')
-    .update(field, value)
-    .where(function () {
-      this.whereNull(field).orWhere(field, '=', '')
-    })
-    .where({
-      teamid,
-      season
-    })
-
 module.exports = {
   run: async () => {
     const season = detectSeason()
     log(`### ${season} ### STRT ### TEAM BINARY DATA ###`)
+
+    const teamInserts = []
 
     // Read conferencens and divisions
     let rawBinaryLGE = loadBinaryFHLFile('.lge')
@@ -33,32 +24,43 @@ module.exports = {
     }
 
     let rawBinary = loadBinaryFHLFile('.tms')
-    let simId = 0
+    let simid = 0
     const teamsDone = new Set()
 
     for (let i = 0; i < rawBinary.length; i += 254) {
       const data = rawBinary.slice(i, i + 255)
-      const id = cleaner(data.slice(61, 64)).toLowerCase()
-      if (!teamsDone.has(id)) {
-        const rink = cleaner(data.slice(64, 95))
+      const teamsim = cleaner(data.slice(0, 10)).toLowerCase()
+      const teamid = cleaner(data.slice(61, 64)).toLowerCase()
+      const rink = cleaner(data.slice(64, 95))
+
+      if (!teamsDone.has(teamid) && rink.length > 2) {
         const coach = cleaner(data.slice(103, 125))
         const division = data.slice(97, 98).toString('hex')
         const conference = data.slice(98, 99).toString('hex')
 
-        await updateIfNull('rink', rink, id, season)
-        await updateIfNull('coach', coach, id, season)
+        teamInserts.push({
+          teamid,
+          season,
+          teamsim,
+          simid,
+          rink,
+          coach,
+          conference: conferences[conference],
+          division: divisions[conference + division]
+        })
 
-        await db('team')
-          .update('simid', simId)
-          .update('conference', conferences[conference])
-          .update('division', divisions[conference + division])
-          .where({
-            teamid: id,
-            season
-          })
-        teamsDone.add(id)
+        teamsDone.add(teamid)
       }
-      simId++
+      simid++
+    }
+
+    if (teamInserts.length > 0) {
+      db('team')
+        .insert(teamInserts)
+        .onConflict()
+        .ignore()
+        .then()
+        .catch((e) => console.log(e))
     }
     log(`### ${season} ### DONE ### TEAM BINARY DATA ###`)
   }
