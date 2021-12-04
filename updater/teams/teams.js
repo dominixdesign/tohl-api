@@ -6,30 +6,6 @@ module.exports = {
   run: () => {
     const season = detectSeason()
     let rawHtml = loadFHLFile('TeamScoring')
-    let rawHtmlStandings = loadFHLFile('Standings')
-    const divisionAssignment = rawHtmlStandings.split('<H3>')
-
-    const teamsToDivision = {}
-    const teamsToConference = {}
-
-    for (const html of divisionAssignment) {
-      const divisionRegex = html.match(
-        /(?<divison>[A-Z]+) Division<\/H3>|(?<conference>[A-Z]+) Conference<\/H3>/
-      )
-      if (divisionRegex) {
-        const teamsMatches = [...html.matchAll(/#(?<team>[A-Z]+)/gm)] || []
-        for (const { groups } of teamsMatches) {
-          if (divisionRegex.groups.divison) {
-            teamsToDivision[groups.team.toLowerCase()] =
-              divisionRegex.groups.divison.toLowerCase()
-          }
-          if (divisionRegex.groups.conference) {
-            teamsToConference[groups.team.toLowerCase()] =
-              divisionRegex.groups.conference.toLowerCase()
-          }
-        }
-      }
-    }
 
     const teamInserts = []
     const teams = rawHtml.split('<H2>')
@@ -44,8 +20,6 @@ module.exports = {
           teamInserts.push({
             teamid,
             season,
-            conference: teamsToConference[teamname.toLowerCase()],
-            division: teamsToDivision[teamname.toLowerCase()],
             teamsim: teamname.toLowerCase()
           })
         }
@@ -56,7 +30,7 @@ module.exports = {
       db('team')
         .insert(teamInserts)
         .onConflict()
-        .merge(['teamsim', 'conference', 'division'])
+        .merge(['teamsim'])
         .then()
         .catch((e) => console.log(e))
     }
