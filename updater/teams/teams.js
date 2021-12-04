@@ -1,10 +1,13 @@
 const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
 const { detectSeason } = require('../../lib/functions')
 const db = require('../../server/helpers/db')
+const log = require('../../server/helpers/logger')
 
 module.exports = {
   run: () => {
     const season = detectSeason()
+    log(new Date())
+    log(`### ${season} ### STRT ### TEAM BINARY DATA ###`)
     let rawHtml = loadFHLFile('TeamScoring')
 
     const teamInserts = []
@@ -34,5 +37,6 @@ module.exports = {
         .then()
         .catch((e) => console.log(e))
     }
+    log(`### ${season} ### DONE ### TEAM BINARY DATA ###`)
   }
 }

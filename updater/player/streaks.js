@@ -58,12 +58,14 @@ module.exports = {
         currentStreak.streak_points_current = 0
       }
     }
-    await db('playerstats')
-      .insert(updateStreaks)
-      .onConflict()
-      .merge()
-      .then()
-      .catch()
+    if (updateStreaks.length > 0) {
+      await db('playerstats')
+        .insert(updateStreaks)
+        .onConflict()
+        .merge()
+        .then()
+        .catch()
+    }
 
     log(`### ${season} ### DONE ### PLAYER STREAKS ###`)
   }

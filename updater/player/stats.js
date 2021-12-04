@@ -80,12 +80,14 @@ module.exports = {
       .count('injured as injuries')
       .groupBy('player', 'team')
 
-    await db('playerstats')
-      .insert(allLineupArray)
-      .onConflict()
-      .merge()
-      .then()
-      .catch()
+    if (allLineupArray.length > 0) {
+      await db('playerstats')
+        .insert(allLineupArray)
+        .onConflict()
+        .merge()
+        .then()
+        .catch()
+    }
 
     log(`### ${season} ### DONE ### PLAYER STATS ###`)
   }

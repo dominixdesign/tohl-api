@@ -625,7 +625,7 @@ module.exports = {
         .catch((e) => console.log(e))
     }
 
-    if (teamstats) {
+    if (Object.keys(teamstats).length > 0) {
       await db('teamstats')
         .insert(Object.values(teamstats))
         .onConflict()

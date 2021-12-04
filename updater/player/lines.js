@@ -22,9 +22,12 @@ const lt = ['ES', 'PP', 'PK']
 module.exports = {
   run: async () => {
     const season = detectSeason()
-    log(`### ${season} ### STRT ### LINES ###`)
-
     const gameday = detectGameday()
+    if (gameday === 0) {
+      log(`___ ${season} ___ SKIP ___ LINES ___`)
+      return
+    }
+    log(`### ${season} ### STRT ### LINES ###`)
 
     // get gameids for current gameday
     const gameIds = {}
