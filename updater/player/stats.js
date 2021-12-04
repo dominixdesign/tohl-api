@@ -1,4 +1,4 @@
-const detectSeason = require('../../lib/detectSeason')
+const { detectSeason } = require('../../lib/functions')
 const db = require('../../server/helpers/db')
 const log = require('../../server/helpers/logger')
 

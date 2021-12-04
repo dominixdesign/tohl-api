@@ -1,7 +1,7 @@
 const chokidar = require('chokidar')
 const unzipper = require('unzipper')
 const updater = require('./updater')
-const { init } = require('./lib/team')
+const { init } = require('./lib/functions')
 const fs = require('fs')
 let sleep = require('util').promisify(setTimeout)
 let runOnly

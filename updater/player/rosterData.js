@@ -1,7 +1,6 @@
 const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
 const generatePlayerId = require('../../lib/playerId')
-const detectSeason = require('../../lib/detectSeason')
-const { team } = require('../../lib/team')
+const { team, detectSeason } = require('../../lib/functions')
 const db = require('../../server/helpers/db')
 const log = require('../../server/helpers/logger')
 

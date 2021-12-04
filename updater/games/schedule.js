@@ -1,8 +1,7 @@
 const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
-const detectSeason = require('../../lib/detectSeason')
 const db = require('../../server/helpers/db')
 const log = require('../../server/helpers/logger')
-const { team } = require('../../lib/team')
+const { team, detectSeason } = require('../../lib/functions')
 const updateStreak = require('./updateStreak')
 
 const gamePatternArray = [
