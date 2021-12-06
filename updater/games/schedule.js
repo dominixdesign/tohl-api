@@ -186,11 +186,16 @@ module.exports = {
             const gameData = schedulePattern.exec(entry)
             if (gameData) {
               const { groups } = gameData
+              const gameNumberDB = isPlayoff
+                ? `${groups.round}${groups.gamenumber
+                    .toString()
+                    .padStart(2, '0')}`
+                : groups.gamenumber
               const home = team(groups.home)
               const away = team(groups.away)
               gameInsert.push({
                 season,
-                game: groups.gamenumber,
+                game: gameNumberDB,
                 gameday,
                 home,
                 away
