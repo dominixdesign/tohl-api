@@ -22,10 +22,13 @@ module.exports = {
       shots: Int
       hits: Int
       icetime: Int
+      evg: Int
+      eva: Int
       ppg: Int
       ppa: Int
       shg: Int
       sha: Int
+      gwg: Int
       streak_goals_current: Int
       streak_goals_longest: Int
       streak_points_current: Int
@@ -91,6 +94,8 @@ module.exports = {
           .debug(true)
           .select([
             '*',
+            db.raw('goals - ppg - shg as evg'),
+            db.raw('assists - ppa - sha as eva'),
             db.raw('ROUND((saves / shotsfaced)*100, 2) as savepercentage'),
             db.raw('ROUND(goalsagainst / (minutes / 60),2) as gaa')
           ])
