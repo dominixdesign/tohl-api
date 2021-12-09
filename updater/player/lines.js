@@ -82,11 +82,11 @@ module.exports = {
       .catch((e) => console.log(e))
 
     // cleanup lineup to remove invalid lines without team
-    // await db('lineup')
-    //   .where('team', '')
-    //   .delete()
-    //   .then()
-    //   .catch((e) => console.log(e))
+    await db('lineup')
+      .where('team', '')
+      .delete()
+      .then()
+      .catch((e) => console.log(e))
 
     log(`### ${season} ### DONE ### LINES ###`)
   }

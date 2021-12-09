@@ -11,6 +11,13 @@ module.exports = {
     const seasonRef = db.ref('lineup.season')
     const teamRef = db.ref('lineup.team')
 
+    const gwg = db('goal')
+      .count()
+      .groupBy('player', 'scoringteam')
+      .where('goalscorer', playerRef)
+      .where('season', seasonRef)
+      .where('scoringteam', teamRef)
+      .where('tags', 'like', '%gamewinner%')
     const ppg = db('goal')
       .count()
       .groupBy('player', 'scoringteam')
@@ -70,7 +77,7 @@ module.exports = {
         second_stars: db.raw("case when star like 'second' then 1 else 0 end"),
         third_stars: db.raw("case when star like 'third' then 1 else 0 end")
       })
-      .select({ ppg, ppa, shg, sha })
+      .select({ ppg, ppa, shg, sha, gwg })
       .sum('minutes as minutes')
       .sum('saves as saves')
       .sum('shutout as shutout')
