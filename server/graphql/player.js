@@ -59,11 +59,15 @@ module.exports = {
   resolvers: {
     Player: {
       data: (parent) => db('playerdata').where('playerid', parent.id).select(),
-      seasondata: (parent, { season }) =>
-        db('playerdata')
-          .where('playerid', parent.id)
-          .where('season', season)
-          .first()
+      seasondata: (parent, { season }) => {
+        if (season) {
+          return db('playerdata')
+            .where('playerid', parent.id)
+            .where('season', season)
+            .first()
+        } else {
+        }
+      }
     },
     Playerdata: {
       team: (parent, _, { loader: { team } }) => team.load(parent.teamid)

@@ -48,6 +48,9 @@ module.exports = {
       first_stars: Int
       second_stars: Int
       third_stars: Int
+      farm_goals: Int
+      farm_assists: Int
+      farm_points: Int
     }
 
     extend type Query {
@@ -96,6 +99,7 @@ module.exports = {
             '*',
             db.raw('goals - ppg - shg as evg'),
             db.raw('assists - ppa - sha as eva'),
+            db.raw('farm_goals + farm_assists as farm_points'),
             db.raw('ROUND((saves / shotsfaced)*100, 2) as savepercentage'),
             db.raw('ROUND(goalsagainst / (minutes / 60),2) as gaa')
           ])
