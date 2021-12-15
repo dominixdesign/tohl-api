@@ -64,6 +64,18 @@ const goaliePattern = new RegExp(
   'gm'
 )
 
+const farmPattern = new RegExp(
+  [
+    "(?<player>[a-zA-Z- .']*)",
+    '([0-9 ]*) \\(',
+    '(?<assist1>[A-Za-z- ]*),',
+    '(?<assist2>[A-Za-z- ]*)',
+    '\\)$|(?<switch>^\n$)',
+    '|(?<line>^[-]{37}$)'
+  ].join(''),
+  'gm'
+)
+
 const durations = {
   Minor: 2,
   Mayor: 5,
@@ -87,6 +99,7 @@ module.exports = {
     const insertGoalies = []
     const insertLineup = []
     const insertPenalty = []
+    const farmStats = {}
     const updateGame = []
     const teamstats = {}
 
@@ -573,6 +586,47 @@ module.exports = {
           )
           teamstats[team].pim += parseInt(pim[team])
         }
+
+        // Farmstats only on regular season games
+        if (!isPlayoff) {
+          const farmMatches = [...htmlParts[3].matchAll(farmPattern)] || []
+          let startFarm = false
+          let farmTeam = away
+          for (const { groups } of farmMatches) {
+            if (groups.line && groups.line.length > 0) {
+              if (startFarm) {
+                break
+              }
+              startFarm = true
+            } else if (groups.switch && groups.switch.length > 0 && startFarm) {
+              farmTeam = home
+            } else if (startFarm) {
+              const updateFarmStats = (playerName, farm_team, goal, assist) => {
+                if (playerName && playerName.trim() !== 'unknown') {
+                  const player = generatePlayerId(playerName)
+                  const farmPlayerKey = `${player}-${farm_team}`
+                  if (!farmStats[farmPlayerKey]) {
+                    farmStats[farmPlayerKey] = {
+                      player,
+                      team: farm_team,
+                      season,
+                      farm_goals: 0,
+                      farm_assists: 0
+                    }
+                  }
+                  if (goal) {
+                    farmStats[farmPlayerKey].farm_goals++
+                  } else if (assist) {
+                    farmStats[farmPlayerKey].farm_assists++
+                  }
+                }
+              }
+              updateFarmStats(groups.player, farmTeam, true)
+              updateFarmStats(groups.assist1, farmTeam, false, true)
+              updateFarmStats(groups.assist2, farmTeam, false, true)
+            }
+          }
+        }
       }
 
       gameNumber = parseInt(gameNumber) + 1
@@ -628,6 +682,15 @@ module.exports = {
     if (Object.keys(teamstats).length > 0) {
       await db('teamstats')
         .insert(Object.values(teamstats))
+        .onConflict()
+        .merge()
+        .then()
+        .catch((e) => console.log(e))
+    }
+
+    if (Object.keys(farmStats).length > 0) {
+      await db('playerstats')
+        .insert(Object.values(farmStats))
         .onConflict()
         .merge()
         .then()
