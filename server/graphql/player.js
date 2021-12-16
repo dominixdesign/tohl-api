@@ -59,14 +59,14 @@ module.exports = {
   resolvers: {
     Player: {
       data: (parent) => db('playerdata').where('playerid', parent.id).select(),
-      seasondata: (parent, { season }) => {
-        if (season) {
-          return db('playerdata')
-            .where('playerid', parent.id)
-            .where('season', season)
-            .first()
-        } else {
+      seasondata: async (parent, { season }, { loader: { latestSeason } }) => {
+        if (!season) {
+          season = await latestSeason(parent.id)
         }
+        return db('playerdata')
+          .where('playerid', parent.id)
+          .where('season', season)
+          .first()
       }
     },
     Playerdata: {

@@ -22,5 +22,23 @@ module.exports = () => ({
       .whereIn('id', ids)
       .select()
       .then((rows) => ids.map((id) => rows.find((x) => x.id === id)))
-  )
+  ),
+  latestSeason: async (playerId) => {
+    const data = await db
+      .table('playerdata')
+      .select([
+        'season',
+        db.raw(
+          'CONCAT( LEFT(`season`, 6), IF( RIGHT(`season`, 3) = "PLF", "_3", IF( RIGHT(`season`, 3) = "pre", "_1", "_2" ) ) ) AS SeasonSort'
+        )
+      ])
+      .modify((queryBuilder) => {
+        if (playerId) {
+          queryBuilder.where('playerid', playerId)
+        }
+      })
+      .orderBy('SeasonSort', 'desc')
+      .first()
+    return data.season
+  }
 })
