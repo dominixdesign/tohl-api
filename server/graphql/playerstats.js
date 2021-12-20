@@ -36,8 +36,8 @@ module.exports = {
       fightswon: Int
       fightslose: Int
       fightsdraw: Int
-      injuries: String
-      ejections: String
+      injuries: Int
+      ejections: Int
       minutes: Int
       saves: Int
       shotsfaced: Int

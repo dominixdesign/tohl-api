@@ -9,6 +9,7 @@ module.exports = {
     }
 
     type Playerdata {
+      player: Player
       season: String!
       team: Team
       number: Int
@@ -51,6 +52,13 @@ module.exports = {
     }
     extend type Query {
       players: [Player]
+      findByData(
+        season: ID!
+        where: JSON
+        orderBy: [OrderBy]
+        limit: Int
+        offset: Int
+      ): [Playerdata]
       roster(teamsim: String!, season: ID!): [Player]
       findPlayers(filter: PlayerFilter): [Player]
       player(id: ID!): Player
@@ -70,7 +78,9 @@ module.exports = {
       }
     },
     Playerdata: {
-      team: (parent, _, { loader: { team } }) => team.load(parent.teamid)
+      team: (parent, _, { loader: { team } }) => team.load(parent.teamid),
+      player: (parent, _, { loader: { player } }) =>
+        player.load(parent.playerid)
     },
     Query: {
       players: async () => db('player').select(),
@@ -87,6 +97,26 @@ module.exports = {
           .where('playerdata.season', season)
           .select(),
       findPlayers: async (_, args) => db('player').where(args.filter).select(),
+      findByData: async (_, { season, orderBy, limit, offset, where }) =>
+        db('playerdata')
+          .where('season', season)
+          .modify((queryBuilder) => {
+            if (where) {
+              for (const entry of JSON.parse(where)) {
+                if (entry[2].includes('SELECT')) {
+                  queryBuilder.where(
+                    db.raw(`${entry[0]} ${entry[1]} ${entry[2]}`)
+                  )
+                } else {
+                  queryBuilder.where(entry[0], entry[1], entry[2])
+                }
+              }
+            }
+          })
+          .orderBy(orderBy || 'playerid')
+          .limit(limit || 100)
+          .offset(offset || 0)
+          .select(),
       player: async (_, args) => db('player').where('id', args.id).first()
     }
   }
