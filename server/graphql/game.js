@@ -99,7 +99,6 @@ module.exports = {
       lastGameday: async (_, args) =>
         db('game')
           .where('season', args.season)
-          .debug()
           .where(function () {
             this.where(
               'gameday',

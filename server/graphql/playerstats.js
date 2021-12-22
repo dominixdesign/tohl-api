@@ -94,7 +94,6 @@ module.exports = {
           .orderBy(orderBy || 'player')
           .limit(limit || 100)
           .offset(offset || 0)
-          .debug(true)
           .select([
             '*',
             db.raw('goals - ppg - shg as evg'),
