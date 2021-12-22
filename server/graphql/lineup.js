@@ -13,7 +13,7 @@ module.exports = {
 
     type Lineup {
       season: String!
-      game: Int!
+      game: Game
       player: Player
       team: Team
       goals: Int
@@ -50,7 +50,8 @@ module.exports = {
   resolvers: {
     Lineup: {
       team: (parent, _, { loader: { team } }) => team.load(parent.team),
-      player: (parent, _, { loader: { player } }) => player.load(parent.player)
+      player: (parent, _, { loader: { player } }) => player.load(parent.player),
+      game: (parent, _, { loader: { game } }) => game.load(`${parent.season}-${parent.game}`)
     },
     Query: {
       lineup: async (_, { filter, orderBy, limit, offset, where }) =>
