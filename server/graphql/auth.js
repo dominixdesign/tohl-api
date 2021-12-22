@@ -10,6 +10,7 @@ module.exports = {
     type Auth {
       access_token: String
       refresh_token: String
+      manager: Manager
     }
     extend type Mutation {
       login(username: String!, password: String!, refresh: Boolean): Auth
@@ -17,6 +18,12 @@ module.exports = {
     }
   `,
   resolvers: {
+    Auth: {
+      manager: async (parent, _, { loader: { manager } }) => {
+        console.log(parent)
+        return manager.load(parent.id)
+      }
+    },
     Mutation: {
       login: async (_, { username, password, refresh }) => {
         try {
@@ -28,6 +35,7 @@ module.exports = {
 
           if (user && bcrypt.compareSync(password, user.password)) {
             const returnObj = {
+              id: user.id,
               access_token: generateToken.access({
                 username: user.username,
                 mail: user.mail,
@@ -75,6 +83,7 @@ module.exports = {
             userid: user.userid
           })
           return {
+            id: user.userid,
             access_token: accessToken
           }
         } catch (err) {

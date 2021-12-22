@@ -12,7 +12,8 @@ module.exports = {
       username: String
       mail: String @auth(requires: GM)
       roles: String @auth(requires: ADMIN)
-      teams: [Team]
+      team: Team
+      backups: [Team]
     }
 
     type Managerterm {
@@ -44,12 +45,20 @@ module.exports = {
   `,
   resolvers: {
     Manager: {
-      teams: async (parent, _, { loader: { team } }) => {
+      backups: async (parent, _, { loader: { team } }) => {
         const teams = await db('manager_x_team')
           .select('teamid')
           .where('managerid', parent.id)
+          .where('type', 'BACKUP')
           .whereRaw('valid_from < now() and valid_to > now()')
         return team.loadMany(teams.map((t) => t.teamid))
+      },
+      team: async (parent, _, { loader: { team } }) => {
+        const teams = await db('manager_x_team')
+          .select('teamid')
+          .where('managerid', parent.id)
+          .where('type', 'OWNER')
+        return team.load(teams.pop().teamid)
       }
     },
     Managerterm: {
