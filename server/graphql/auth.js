@@ -15,14 +15,13 @@ module.exports = {
     extend type Mutation {
       login(username: String!, password: String!, refresh: Boolean): Auth
       token(refresh_token: String!): Auth
+      logout(refresh_token: String): Boolean
     }
   `,
   resolvers: {
     Auth: {
-      manager: async (parent, _, { loader: { manager } }) => {
-        console.log(parent)
-        return manager.load(parent.id)
-      }
+      manager: async (parent, _, { loader: { manager } }) =>
+        manager.load(parent.id)
     },
     Mutation: {
       login: async (_, { username, password, refresh }) => {
@@ -89,6 +88,10 @@ module.exports = {
         } catch (err) {
           throw new UserInputError('invalid token')
         }
+      },
+      logout: (_, { refresh_token }) => {
+        refreshTokenHandler.remove(refresh_token)
+        return true
       }
     }
   }
