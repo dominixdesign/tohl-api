@@ -95,7 +95,7 @@ module.exports = {
     let gameLastGame = ''
     let gameThisGame = ''
 
-    const insertGoals = []
+    let insertGoals = []
     const insertGoalies = []
     const insertLineup = []
     const insertPenalty = []
@@ -205,6 +205,7 @@ module.exports = {
         // end ejected players
 
         // begin entered goalies
+        const goalieMinutes = {}
         const enteredGoalies = {}
         const enteredGoaliesMatches =
           [
@@ -213,10 +214,11 @@ module.exports = {
             )
           ] || []
         for (const { groups } of enteredGoaliesMatches) {
-          enteredGoalies[generatePlayerId(groups.player)] =
+          goalieMinutes[generatePlayerId(groups.player)] =
             parseInt(groups.min) +
             (parseInt(groups.period) - 1) * 20 +
             (parseInt(groups.sec) > 0 ? 1 : 0)
+          enteredGoalies[generatePlayerId(groups.player)] = {}
         }
         // end entered goalies
 
@@ -284,7 +286,8 @@ module.exports = {
           const playerId = generatePlayerId(groups.player)
           const name = groups.player.toLowerCase().split(' ')
           const teamId = team(groups.team)
-          insertGoalies.push({
+
+          enteredGoalies[playerId] = {
             player: playerId,
             season,
             team: teamId,
@@ -295,7 +298,7 @@ module.exports = {
             saves: groups.saves,
             shotsfaced: groups.shotsfaced,
             goalsagainst: parseInt(groups.shotsfaced) - parseInt(groups.saves)
-          })
+          }
           teamRoster[teamId]['assists'][name[1].replace('v.', '')] = playerId
           teamRoster[teamId]['pim'][name[1].replace('v.', '')] = playerId
           teamRoster[teamId]['goals'][name[1].replace('v.', '')] = playerId
@@ -362,6 +365,7 @@ module.exports = {
         }
 
         // parse game events
+        const gameGoals = []
         let period = 0,
           score = {
             [home]: 0,
@@ -436,7 +440,7 @@ module.exports = {
                 tags.push('gamewinner')
               }
 
-              insertGoals.push({
+              gameGoals.push({
                 season,
                 game: gameNumberDB,
                 goalscorer,
@@ -492,40 +496,51 @@ module.exports = {
         }
 
         // start goalies
-        for (const goalie of insertGoalies) {
-          goalie.assists = insertGoals.filter(
+        for (const goalieId in enteredGoalies) {
+          const goalie = Object.assign({}, enteredGoalies[goalieId])
+          goalie.assists = gameGoals.filter(
             (g) =>
               g.primaryassist === goalie.player ||
               g.secondaryassist === goalie.player
           ).length
-          goalie.goals = insertGoals.filter(
+          goalie.goals = gameGoals.filter(
             (g) => g.goalscorer === goalie.player
           ).length
+          goalie.points = goalie.goals + goalie.assists
           goalie.pim = insertPenalty
             .filter((g) => g.player === goalie.player)
             .reduce((prev, curr) => prev + curr, 0)
-          if (!goalie.minutes) {
-            if (enteredGoalies[goalie.player]) {
-              goalie.minutes = gameTime - enteredGoalies[goalie.player]
-              for (const otherGoalie of insertGoalies) {
-                if (
-                  otherGoalie.team === goalie.team &&
-                  otherGoalie.player !== goalie.player
-                ) {
-                  otherGoalie.minutes = enteredGoalies[goalie.player]
-                }
-              }
-            } else {
-              goalie.minutes = gameTime
-              if (goalie.goalsagainst === 0) {
-                goalie.shutout = 1
+
+          let goalieChanged = false
+          for (const otherGoalieId in enteredGoalies) {
+            const otherGoalie = enteredGoalies[otherGoalieId]
+            // gleiches team aber andere torhüter
+            if (
+              otherGoalie.team === goalie.team &&
+              goalieMinutes[otherGoalie.player]
+            ) {
+              goalieChanged = {
+                enteringGoalie: otherGoalie.player,
+                changeTime: goalieMinutes[otherGoalie.player]
               }
             }
           }
+          if (goalieChanged) {
+            if (goalieChanged.enteringGoalie === goalie.player) {
+              goalie.minutes = gameTime - goalieChanged.changeTime
+            } else {
+              goalie.minutes = goalieChanged.changeTime
+            }
+          } else {
+            goalie.minutes = gameTime
+            if (goalie.goalsagainst === 0) {
+              goalie.shutout = 1
+            }
+          }
+          insertGoalies.push(goalie)
         }
 
         // end goalies
-
         const powerplay = {
           [home]: {
             situations: 0,
@@ -627,6 +642,9 @@ module.exports = {
             }
           }
         }
+
+        // match goals to insertGoals
+        insertGoals = insertGoals.concat(gameGoals)
       }
 
       gameNumber = parseInt(gameNumber) + 1
