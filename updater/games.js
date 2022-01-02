@@ -78,7 +78,7 @@ const farmPattern = new RegExp(
 
 const durations = {
   Minor: 2,
-  Mayor: 5,
+  Major: 5,
   fighting: 5,
   'Double Minor': 4
 }
@@ -96,9 +96,9 @@ module.exports = {
     let gameThisGame = ''
 
     let insertGoals = []
+    let insertPenalty = []
     const insertGoalies = []
     const insertLineup = []
-    const insertPenalty = []
     const farmStats = {}
     const updateGame = []
     const teamstats = {}
@@ -300,7 +300,9 @@ module.exports = {
             goalsagainst: parseInt(groups.shotsfaced) - parseInt(groups.saves)
           }
           teamRoster[teamId]['assists'][name[1].replace('v.', '')] = playerId
-          teamRoster[teamId]['pim'][name[1].replace('v.', '')] = playerId
+          teamRoster[teamId]['pim'][
+            name[0][0] + '_' + name[1].replace('v.', '')
+          ] = playerId
           teamRoster[teamId]['goals'][name[1].replace('v.', '')] = playerId
 
           // calculate minutes
@@ -366,6 +368,7 @@ module.exports = {
 
         // parse game events
         const gameGoals = []
+        const gamePenalties = []
         let period = 0,
           score = {
             [home]: 0,
@@ -475,7 +478,11 @@ module.exports = {
                 tags.push('gamemisconduct')
               }
 
-              insertPenalty.push({
+              if (penaltyData.groups.penalty === null) {
+                penaltyData.groups.penalty = 'Fighting'
+              }
+
+              gamePenalties.push({
                 season,
                 game: gameNumberDB,
                 player,
@@ -507,9 +514,9 @@ module.exports = {
             (g) => g.goalscorer === goalie.player
           ).length
           goalie.points = goalie.goals + goalie.assists
-          goalie.pim = insertPenalty
+          goalie.pim = gamePenalties
             .filter((g) => g.player === goalie.player)
-            .reduce((prev, curr) => prev + curr, 0)
+            .reduce((prev, curr) => prev + curr.length, 0)
 
           let goalieChanged = false
           for (const otherGoalieId in enteredGoalies) {
@@ -645,6 +652,7 @@ module.exports = {
 
         // match goals to insertGoals
         insertGoals = insertGoals.concat(gameGoals)
+        insertPenalty = insertPenalty.concat(gamePenalties)
       }
 
       gameNumber = parseInt(gameNumber) + 1
