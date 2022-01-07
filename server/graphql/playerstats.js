@@ -12,7 +12,9 @@ module.exports = {
     type Playerstats {
       season: String!
       player: Player!
-      team: Team!
+      team: Team
+      total_teams: [Team]
+      currentTeam: Team
       games: Int
       goals: Int
       assists: Int
@@ -36,6 +38,7 @@ module.exports = {
       fightswon: Int
       fightslose: Int
       fightsdraw: Int
+      enforcerpoints: Int
       injuries: Int
       ejections: Int
       minutes: Int
@@ -65,6 +68,10 @@ module.exports = {
   resolvers: {
     Playerstats: {
       team: (parent, _, { loader: { team } }) => team.load(parent.team),
+      total_teams: (parent, _, { loader: { team } }) =>
+        parent.total_teams && team.loadMany(parent.total_teams.split(',')),
+      currentTeam: (parent, _, { loader: { team } }) =>
+        team.load(parent.teamid),
       player: (parent, _, { loader: { player } }) => player.load(parent.player)
     },
     Query: {
@@ -96,6 +103,9 @@ module.exports = {
           .offset(offset || 0)
           .select([
             '*',
+            db.raw(
+              '50*fightswon + 20*fightslose + 40*fightsdraw + 30*ejections + pim as enforcerpoints'
+            ),
             db.raw('goals - ppg - shg as evg'),
             db.raw('assists - ppa - sha as eva'),
             db.raw('farm_goals + farm_assists as farm_points'),
