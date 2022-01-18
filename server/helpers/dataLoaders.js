@@ -26,9 +26,11 @@ module.exports = () => ({
   game: new DataLoader((ids) =>
     db
       .table('game')
-      .whereIn(db.raw('CONCAT(`season`,\'-\',`game`)'), ids)
+      .whereIn(db.raw("CONCAT(`season`,'-',`game`)"), ids)
       .select()
-      .then((rows) => ids.map((id) => rows.find((x) => `${x.season}-${x.game}` === id)))
+      .then((rows) =>
+        ids.map((id) => rows.find((x) => `${x.season}-${x.game}` === id))
+      )
   ),
   latestSeason: async (playerId) => {
     const data = await db

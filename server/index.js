@@ -23,6 +23,8 @@ const modules = [
   'playerstats',
   'teamstats',
   'game',
+  'goal',
+  'penalty',
   'lineup'
 ]
 let _typeDefs = []

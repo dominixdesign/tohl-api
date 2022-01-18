@@ -1,6 +1,8 @@
 const { gql } = require('apollo-server-express')
 const db = require('../helpers/db')
-const { resolvers } = require('./lineup')
+const lineup = require('./lineup')
+const goal = require('./goal')
+const penalty = require('./penalty')
 // const { manager, player } = require('../helpers/dataLoaders')
 
 module.exports = {
@@ -20,6 +22,8 @@ module.exports = {
       goalshome: Int
       goalsaway: Int
       overtimes: Int
+      goals: [Goal]
+      penalties: [Penalty]
       winner: Team
       loser: Team
       pphome: Int
@@ -48,9 +52,19 @@ module.exports = {
       loser: (parent, _, { loader: { team } }) =>
         parent.loser && team.load(parent.loser),
       lineup: (parent, args) =>
-        resolvers.Query.lineup(undefined, {
+        lineup.resolvers.Query.lineup(undefined, {
           ...args,
           filter: { season: parent.season, game: parent.game }
+        }),
+      goals: (parent) =>
+        goal.resolvers.Query.goalsByGame(undefined, {
+          season: parent.season,
+          game: parent.game
+        }),
+      penalties: (parent) =>
+        penalty.resolvers.Query.penaltiesByGame(undefined, {
+          season: parent.season,
+          game: parent.game
         })
     },
     Query: {
