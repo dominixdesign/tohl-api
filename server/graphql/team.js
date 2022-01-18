@@ -22,6 +22,8 @@ module.exports = {
       division: String
       manager: Manager
       full_name: String
+      rink: String
+      coach: String
       roster(season: ID!): [Player]
     }
     extend type Query {
