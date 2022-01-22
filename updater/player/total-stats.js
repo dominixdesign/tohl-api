@@ -72,6 +72,7 @@ module.exports = {
       .sum('fightswon as fightswon')
       .sum('fightslose as fightslose')
       .sum('fightsdraw as fightsdraw')
+      .sum('suspension as suspension')
       .sum({
         first_stars: db.raw("case when star like 'first' then 1 else 0 end"),
         second_stars: db.raw("case when star like 'second' then 1 else 0 end"),

@@ -176,6 +176,21 @@ module.exports = {
         const htmlParts = rawHtml.split('<BR><BR>')
         const gameEvents = []
 
+        // begin suespensions
+        const suspendedPlayers = {}
+        const suspendedPlayersMatches =
+          [
+            ...htmlParts[3].matchAll(
+              /(?<player>[a-zA-Z- .']+) receives (?<games>[0-9]{1,2}) game suspension/gm
+            )
+          ] || []
+        for (const { groups } of suspendedPlayersMatches) {
+          suspendedPlayers[generatePlayerId(groups.player)] = parseInt(
+            groups.games
+          )
+        }
+        // end suspensions
+
         // begin injured players
         const injuredPlayers = {}
         const injuredPlayersMatches =
@@ -391,6 +406,7 @@ module.exports = {
                 fightswon: fightsWon[playerId],
                 fightslose: fightsLose[playerId],
                 fightsdraw: fightsDraw[playerId],
+                suspension: suspendedPlayers[playerId],
                 plusminus:
                   rosterArray.groups.plusminus === 'even'
                     ? 0
