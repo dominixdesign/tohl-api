@@ -27,6 +27,7 @@ module.exports = {
       fightswon: Int
       fightslose: Int
       fightsdraw: Int
+      suspension: Int
       injured: String
       ejected: String
       minutes: Int
@@ -51,7 +52,8 @@ module.exports = {
     Lineup: {
       team: (parent, _, { loader: { team } }) => team.load(parent.team),
       player: (parent, _, { loader: { player } }) => player.load(parent.player),
-      game: (parent, _, { loader: { game } }) => game.load(`${parent.season}-${parent.game}`)
+      game: (parent, _, { loader: { game } }) =>
+        game.load(`${parent.season}-${parent.game}`)
     },
     Query: {
       lineup: async (_, { filter, orderBy, limit, offset, where }) =>

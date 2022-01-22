@@ -38,6 +38,7 @@ module.exports = {
       fightswon: Int
       fightslose: Int
       fightsdraw: Int
+      suspension: Int
       enforcerpoints: Int
       injuries: Int
       ejections: Int
