@@ -27,7 +27,7 @@ const goalRowPattern = new RegExp(
 const penaltiesRowPattern = new RegExp(
   [
     "(?<player>[A-Z]\\. [A-Z-']*) ",
-    '(?<team>[A-Z0-9]{1,3}) ',
+    '(?<team>[A-Z0-9 ]{3}) ',
     '\\((?<penalty>[A-Z-]*)(, )*',
     '(?<duration>Minor|Double Minor|Major)*',
     '(?<misconduct>, Misconduct)*',
@@ -96,6 +96,7 @@ module.exports = {
     let gameThisGame = ''
 
     let insertGoals = []
+    let insertEvents = []
     let insertPenalty = []
     const insertGoalies = []
     const insertLineup = []
@@ -173,6 +174,7 @@ module.exports = {
 
         // split HTML in four parts (INtro, Scoring, TeamAway, TeamHome + Farm)
         const htmlParts = rawHtml.split('<BR><BR>')
+        const gameEvents = []
 
         // begin injured players
         const injuredPlayers = {}
@@ -183,6 +185,16 @@ module.exports = {
             )
           ] || []
         for (const { groups } of injuredPlayersMatches) {
+          gameEvents.push({
+            season,
+            game: gameNumberDB,
+            team: 'set-by-roster',
+            type: 'injury',
+            player: generatePlayerId(groups.player),
+            period: parseInt(groups.period),
+            minutes: parseInt(groups.min),
+            seconds: parseInt(groups.sec)
+          })
           injuredPlayers[generatePlayerId(groups.player)] = `${
             parseInt(groups.min) + (parseInt(groups.period) - 1) * 20
           }:${parseInt(groups.sec)}`
@@ -198,6 +210,16 @@ module.exports = {
             )
           ] || []
         for (const { groups } of ejectedPlayersMatches) {
+          gameEvents.push({
+            season,
+            game: gameNumberDB,
+            type: 'ejection',
+            team: 'set-by-roster',
+            player: generatePlayerId(groups.player),
+            period: parseInt(groups.period),
+            minutes: parseInt(groups.min),
+            seconds: parseInt(groups.sec)
+          })
           ejectedPlayers[generatePlayerId(groups.player)] = `${
             parseInt(groups.min) + (parseInt(groups.period) - 1) * 20
           }:${parseInt(groups.sec)}`
@@ -214,6 +236,16 @@ module.exports = {
             )
           ] || []
         for (const { groups } of enteredGoaliesMatches) {
+          gameEvents.push({
+            season,
+            game: gameNumberDB,
+            type: 'goalie',
+            team: 'set-by-goalie',
+            player: generatePlayerId(groups.player),
+            period: parseInt(groups.period),
+            minutes: parseInt(groups.min),
+            seconds: parseInt(groups.sec)
+          })
           goalieMinutes[generatePlayerId(groups.player)] =
             parseInt(groups.min) +
             (parseInt(groups.period) - 1) * 20 +
@@ -258,10 +290,26 @@ module.exports = {
         }
         for (const { groups } of fightersMatches) {
           if (groups.winner) {
+            gameEvents.push({
+              season,
+              game: gameNumberDB,
+              type: 'fight',
+              player: generatePlayerId(groups.winner),
+              player2: generatePlayerId(groups.loser),
+              period: 'set-by-penalty'
+            })
             setFight(fightsWon, generatePlayerId(groups.winner))
             setFight(fightsLose, generatePlayerId(groups.loser))
           }
           if (groups.draw1) {
+            gameEvents.push({
+              season,
+              game: gameNumberDB,
+              type: 'draw',
+              player: generatePlayerId(groups.draw1),
+              player2: generatePlayerId(groups.draw2),
+              period: 'set-by-penalty'
+            })
             setFight(fightsDraw, generatePlayerId(groups.draw1))
             setFight(fightsDraw, generatePlayerId(groups.draw2))
           }
@@ -286,6 +334,12 @@ module.exports = {
           const playerId = generatePlayerId(groups.player)
           const name = groups.player.toLowerCase().split(' ')
           const teamId = team(groups.team)
+
+          gameEvents.forEach((ge) => {
+            if (ge.team === 'set-by-goalie' && playerId === ge.player) {
+              ge.team = teamId
+            }
+          })
 
           enteredGoalies[playerId] = {
             player: playerId,
@@ -343,6 +397,12 @@ module.exports = {
                     : rosterArray.groups.plusminus
               }
               insertLineup.push(playerRow)
+
+              gameEvents.forEach((ge) => {
+                if (ge.team === 'set-by-roster' && playerId === ge.player) {
+                  ge.team = team
+                }
+              })
 
               if (rosterArray.groups.goals > 0) {
                 teamRoster[team]['goals'][
@@ -460,6 +520,7 @@ module.exports = {
               })
             }
 
+            let lastPenaltyPlayer = null
             const filterMatches = [...entry.matchAll(penaltiesRowPattern)] || []
             for (const penaltyData of filterMatches) {
               const time = {
@@ -478,9 +539,27 @@ module.exports = {
                 tags.push('gamemisconduct')
               }
 
-              if (penaltyData.groups.penalty === null) {
-                penaltyData.groups.penalty = 'Fighting'
+              if (!penaltyData.groups.penalty) {
+                penaltyData.groups.penalty = 'fighting'
               }
+
+              if (penaltyData.groups.penalty.toLowerCase() === 'fighting') {
+                gameEvents.forEach((ge) => {
+                  if (
+                    ge.period === 'set-by-penalty' &&
+                    ((player === ge.player &&
+                      lastPenaltyPlayer === ge.player2) ||
+                      (player === ge.player2 &&
+                        lastPenaltyPlayer === ge.player))
+                  ) {
+                    ge.period = period
+                    ge.minutes = time['min']
+                    ge.seconds = time['sec']
+                  }
+                })
+              }
+
+              lastPenaltyPlayer = player
 
               gamePenalties.push({
                 season,
@@ -650,13 +729,30 @@ module.exports = {
           }
         }
 
+        // if (gameNumberDB === 7) {
+        //   console.log(gameEvents)
+        //   console.log(gamePenalties)
+        //   process.exit()
+        // }
+
         // match goals to insertGoals
+        insertEvents = insertEvents.concat(gameEvents)
         insertGoals = insertGoals.concat(gameGoals)
         insertPenalty = insertPenalty.concat(gamePenalties)
       }
 
       gameNumber = parseInt(gameNumber) + 1
     } while (gameExists)
+
+    // log('insert events')
+    if (insertEvents.length > 0) {
+      await db('game_event')
+        .insert(insertEvents)
+        .onConflict()
+        .merge()
+        .then()
+        .catch((e) => console.log(e))
+    }
 
     // log('insert lineup')
     if (insertLineup.length > 0) {
