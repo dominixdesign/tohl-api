@@ -25,6 +25,7 @@ const modules = [
   'game',
   'goal',
   'penalty',
+  'game_event',
   'lineup'
 ]
 let _typeDefs = []

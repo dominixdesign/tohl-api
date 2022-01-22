@@ -3,6 +3,7 @@ const db = require('../helpers/db')
 const lineup = require('./lineup')
 const goal = require('./goal')
 const penalty = require('./penalty')
+const gameevent = require('./game_event')
 // const { manager, player } = require('../helpers/dataLoaders')
 
 module.exports = {
@@ -24,6 +25,7 @@ module.exports = {
       overtimes: Int
       goals: [Goal]
       penalties: [Penalty]
+      events: [GameEvent]
       winner: Team
       loser: Team
       pphome: Int
@@ -63,6 +65,11 @@ module.exports = {
         }),
       penalties: (parent) =>
         penalty.resolvers.Query.penaltiesByGame(undefined, {
+          season: parent.season,
+          game: parent.game
+        }),
+      events: (parent) =>
+        gameevent.resolvers.Query.eventsByGame(undefined, {
           season: parent.season,
           game: parent.game
         })
