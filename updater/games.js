@@ -207,7 +207,7 @@ module.exports = {
             type: 'injury',
             player: generatePlayerId(groups.player),
             period: parseInt(groups.period),
-            minutes: parseInt(groups.min),
+            minutes: parseInt(groups.min) + (parseInt(groups.period) - 1) * 20,
             seconds: parseInt(groups.sec)
           })
           injuredPlayers[generatePlayerId(groups.player)] = `${
@@ -232,7 +232,7 @@ module.exports = {
             team: 'set-by-roster',
             player: generatePlayerId(groups.player),
             period: parseInt(groups.period),
-            minutes: parseInt(groups.min),
+            minutes: parseInt(groups.min) + (parseInt(groups.period) - 1) * 20,
             seconds: parseInt(groups.sec)
           })
           ejectedPlayers[generatePlayerId(groups.player)] = `${
@@ -258,7 +258,7 @@ module.exports = {
             team: 'set-by-goalie',
             player: generatePlayerId(groups.player),
             period: parseInt(groups.period),
-            minutes: parseInt(groups.min),
+            minutes: parseInt(groups.min) + (parseInt(groups.period) - 1) * 20,
             seconds: parseInt(groups.sec)
           })
           goalieMinutes[generatePlayerId(groups.player)] =
@@ -569,8 +569,8 @@ module.exports = {
                         lastPenaltyPlayer === ge.player))
                   ) {
                     ge.period = period
-                    ge.minutes = time['min']
-                    ge.seconds = time['sec']
+                    ge.minutes = parseInt(time.min) + (period - 1) * 20
+                    ge.seconds = time.sec
                   }
                 })
               }
