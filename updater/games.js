@@ -560,7 +560,7 @@ module.exports = {
               }
 
               if (penaltyData.groups.penalty.toLowerCase() === 'fighting') {
-                gameEvents.forEach((ge) => {
+                for (const ge of gameEvents) {
                   if (
                     ge.period === 'set-by-penalty' &&
                     ((player === ge.player &&
@@ -569,10 +569,10 @@ module.exports = {
                         lastPenaltyPlayer === ge.player))
                   ) {
                     ge.period = period
-                    ge.minutes = parseInt(time.min) + (period - 1) * 20
+                    ge.minutes = time.min
                     ge.seconds = time.sec
                   }
-                })
+                }
               }
 
               lastPenaltyPlayer = player
