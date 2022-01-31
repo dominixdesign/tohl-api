@@ -1,6 +1,7 @@
 const loadFHLFile = require('../../lib/filesystem/loadFHLFile')
 const db = require('../../server/helpers/db')
 const log = require('../../server/helpers/logger')
+const detectGameday = require('../../lib/detectGameday')
 const { team, detectSeason } = require('../../lib/functions')
 const updateStreak = require('./updateStreak')
 
@@ -234,6 +235,25 @@ module.exports = {
         .then()
         .catch((e) => console.log(e))
     }
+
+    // gamedate
+    const currentGameday = detectGameday()
+    const today = new Date()
+    await db('game')
+      .update({
+        gamedate: `${today.getFullYear()}-${
+          today.getMonth() + 1
+        }-${today.getDate()}`
+      })
+      .where({
+        gameday: currentGameday,
+        season: season
+      })
+      .whereNull('gamedate')
+      .whereNotNull('goalshome')
+      .then()
+      .catch((e) => console.log(e))
+
     log(`### ${season} ### DONE ### SCHEDULE ###`)
   }
 }
