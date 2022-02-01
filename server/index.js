@@ -99,7 +99,12 @@ const server = new ApolloServer({
 })
 
 const app = express()
-server.applyMiddleware({ app })
+server.applyMiddleware({
+  app,
+  cors: {
+    origin: ['https://2016.my-tohl.org', 'https://my-tohl.org']
+  }
+})
 app.use(
   fileUpload({
     createParentPath: true
