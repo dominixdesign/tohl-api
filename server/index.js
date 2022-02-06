@@ -65,7 +65,7 @@ const server = new ApolloServer({
   context: async ({ req }) => {
     const authHeader = req.headers.authorization
     let user = {}
-    if (authHeader) {
+    if (authHeader && req.body.operationName !== 'managerLogin') {
       try {
         const token = authHeader.split(' ')[1]
         if (token) {
@@ -102,7 +102,11 @@ const app = express()
 server.applyMiddleware({
   app,
   cors: {
-    origin: ['https://2016.my-tohl.org', 'https://my-tohl.org']
+    origin: [
+      'https://2016.my-tohl.org',
+      'https://my-tohl.org',
+      'http://localhost:3001'
+    ]
   }
 })
 app.use(
