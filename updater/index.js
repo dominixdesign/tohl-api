@@ -1,6 +1,7 @@
 require('dotenv').config()
 
 const teamBinaryData = require('./teams/teamBinaryData')
+const teamBinaryLines = require('./teams/teamBinaryLines')
 const games = require('./games')
 const schedule = require('./games/schedule')
 const playerRosterData = require('./player/rosterData')
@@ -23,5 +24,6 @@ module.exports = {
   playerStats,
   playerStatsTotal,
   streaks,
-  lines
+  lines,
+  teamBinaryLines
 }

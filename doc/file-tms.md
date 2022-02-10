@@ -136,5 +136,149 @@ FF FF 2B 18 1F 09 09 2B FF FF FF FF FF FF FF 00
 6D
 6E
 6F
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+7A
+7B
+7C
+7D
+7E
+7F
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+8A
+8B
+8C
+8D
+8E
+8F
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+9A
+9B
+9C
+9D
+9E
+9F
+A0
+A1
+A2
+A3
+A4
+A5
+A6
+A7
+A8
+A9
+AA
+AB
+AC
+AD
+AE Center 1. Reihe
+AF Center 2. Reihe
+B0 Center 3. Reihe
+B1 Center 4. Reihe
+B2 Center PP5-1
+B3 Center PP5-2
+B4 Center PP4-1
+B5 Center PP4-2
+B6 Center PK4-1
+B7 Center PK4-2
+B8 Center PK3-1
+B9 Center PK3-2
+BA Starter Goalie
+BB Left Wing 1. Reihe
+BC Left Wing 2. Reihe
+BD Left Wing 3. Reihe
+BE Left Wing 4. Reihe
+BF Left Wing PP5-1
+C0 Left Wing PP5-2
+C1 Winger PP4-1
+C2 Winger PP4-2
+C3 Winger PK4-1
+C4 Winger PK4-2
+C5 Left Defense PK3-1
+C6 Left Defense PK3-2
+C7 Extra Atacker 1
+C8 Right Wing 1. Reihe
+C9 Right Wing 2. Reihe
+CA Right Wing 3. Reihe
+CB Right Wing 4. Reihe
+CC Right Wing PP5-1
+CD Right Wing PP5-2
+CE Left Defense PP4-1
+CF Left Defense PP4-2
+D0 Left Defense PK4-1
+D1 Left Defense PK4-2
+D2 Right Defense PK3-1
+D3 Right Defense PK3-2
+D4 Extra Attacker 2
+D5 Left Defense 1. Reihe
+D6 Left Defense 2. Reihe
+D7 Left Defense 3. Reihe
+D8 Left Defense 4. Reihe
+D9 Left Defense PP5-1
+DA Left Defense PP5-2
+DB Right Defense PP4-1
+DC Right Defense PP4-2
+DD Right Defense PK4-1
+DE Right Defense Pk4-2
+DF
+E0
+E1
+E2 Right Defense 1. Reihe
+E3 Right Defense 2. Reihe
+E4 Right Defense 3. Reihe
+E5 Right Defense 4. Reihe
+E6 Right Defense PP5-1
+E7 Right Defense PP5-2
+E8
+E9
+EA
+EB
+EC
+ED
+EE
+EF
+F0
+F1
+F2
+F3
+F4
+F5
+F6
+F7
+F8
+F9
+FA
+FB
+FC
+FD
+FE
+FF
 ...
 ```
