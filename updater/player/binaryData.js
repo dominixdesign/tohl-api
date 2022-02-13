@@ -22,11 +22,21 @@ module.exports = {
       const nation = generatePlayerId(
         data.slice(76, 79).toString().substr(0, 22).trim()
       )
+      let roster = 'farm'
+      //console.log(playerid, data.slice(30, 31).toString('hex'))
+      if (data.slice(30, 31).toString('hex') === '64') {
+        roster = 'scratch'
+      }
+      if (data.slice(30, 31).toString('hex') === 'c8') {
+        roster = 'pro'
+      }
+      console.log(playerid, roster)
       if (playerid !== '') {
         updatePlayerData.push({
           playerid,
           season,
-          simId
+          simId,
+          roster
         })
         updatePlayer.push({
           id: playerid,
@@ -51,7 +61,7 @@ module.exports = {
       await db('playerdata')
         .insert(updatePlayerData)
         .onConflict()
-        .merge(['simId'])
+        .merge(['simId', 'roster'])
         .then()
         .catch()
     }

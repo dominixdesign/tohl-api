@@ -127,28 +127,28 @@ FF FF 2B 18 1F 09 09 2B FF FF FF FF FF FF FF 00
 64
 65
 66
-67
-68
-69
-6A
-6B
-6C
-6D
-6E
-6F
-70
-71
-72
-73
-74
-75
-76
-77
-78
-79
-7A
-7B
-7C
+67 Trainername
+68 Trainername
+69 Trainername
+6A Trainername
+6B Trainername
+6C Trainername
+6D Trainername
+6E Trainername
+6F Trainername
+70 Trainername
+71 Trainername
+72 Trainername
+73 Trainername
+74 Trainername
+75 Trainername
+76 Trainername
+77 Trainername
+78 Trainername
+79 Trainername
+7A Trainername
+7B Trainername
+7C Trainername
 7D
 7E
 7F

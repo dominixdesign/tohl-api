@@ -47,7 +47,7 @@ Teams kommen sequentiell.
 1B Größe in inch
 1C Gewicht in lbs
 1D Alter
-1E Verletzungsbeschreibung
+1E 200(C8)= Pro Team, 100(64) = Farm Team, 0 = Scratch
 1F Wert: CON
 20 Wert: IT
 21 Wert: SP
