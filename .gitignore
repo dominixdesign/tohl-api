@@ -122,3 +122,6 @@ upload/
 
 #tohl server
 server/.temp/
+api/
+.pm2/
+server/nohup.out
