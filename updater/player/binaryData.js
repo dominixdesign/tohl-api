@@ -30,7 +30,6 @@ module.exports = {
       if (data.slice(30, 31).toString('hex') === 'c8') {
         roster = 'pro'
       }
-      console.log(playerid, roster)
       if (playerid !== '') {
         updatePlayerData.push({
           playerid,
