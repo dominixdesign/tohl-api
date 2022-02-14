@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "npx nodemon index.js",
+    "updater": "node ./updater/runner.js",
     "start": "npx nodemon server/index.js"
   },
   "repository": {
