@@ -26,7 +26,8 @@ const modules = [
   'goal',
   'penalty',
   'game_event',
-  'lineup'
+  'lineup',
+  'lines'
 ]
 let _typeDefs = []
 let _resolvers = []

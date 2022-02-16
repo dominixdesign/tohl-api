@@ -10,7 +10,7 @@ module.exports = {
       lines_json: String
     }
     extend type Query {
-      lines(season: String!, gameday: Int!, team: String!): Lines
+      lines(season: String!, gameday: Int, team: String!): Lines
     }
   `,
   resolvers: {
@@ -19,7 +19,25 @@ module.exports = {
     },
     Query: {
       lines: async (_, { season, gameday, team }) =>
-        db('line').where({ season, gameday, team }).select().first()
+        db('line')
+          .where({ season, team })
+          .where(function () {
+            if (gameday) {
+              this.where({ gameday })
+            } else {
+              this.where(
+                'gameday',
+                db('game')
+                  .where('season', season)
+                  .whereNotNull('goalshome')
+                  .whereNotNull('goalsaway')
+                  .select(db.raw('max(`gameday`) as lastgameday'))
+                  .first()
+              )
+            }
+          })
+          .select()
+          .first()
     }
   }
 }
