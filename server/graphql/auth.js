@@ -1,4 +1,6 @@
 const { gql, UserInputError } = require('apollo-server-express'),
+  axios = require('axios'),
+  qs = require('qs'),
   db = require('../helpers/db'),
   generateToken = require('../helpers/generateToken'),
   refreshTokenHandler = require('../helpers/refreshTokenHandler'),
@@ -26,11 +28,52 @@ module.exports = {
     Mutation: {
       login: async (_, { username, password, refresh }) => {
         try {
-          const user = await db('manager')
+          let user = await db('manager')
             .where({
               mail: username
             })
             .first('password', 'username', 'mail', 'roles', 'id')
+
+          if (!user) {
+            // user unknown, try to login on old site
+            const { data } = await axios({
+              method: 'POST',
+              headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json'
+              },
+              data: qs.stringify({
+                username,
+                password
+              }),
+              url: 'https://my-tohl.org/tohl/login.php?login=true'
+            })
+
+            // found user in old database
+            // create it in new database as well
+            const hashedPw = await bcrypt.hash(password, 3)
+
+            const newGM = await db('manager').insert({
+              mail: data.email,
+              username,
+              password: hashedPw,
+              roles: 'GM'
+            })
+            // managerid	teamid	valid_from	valid_to	type
+            await db('manager_x_team').insert({
+              managerid: newGM[0],
+              teamid: data.team,
+              valid_from: '2000-05-10 00:00:00',
+              valid_to: '3000-05-17 00:00:00',
+              type: 'OWNER'
+            })
+
+            user = await db('manager')
+              .where({
+                username
+              })
+              .first('password', 'username', 'mail', 'roles', 'id')
+          }
 
           if (user && bcrypt.compareSync(password, user.password)) {
             const returnObj = {
@@ -75,6 +118,16 @@ module.exports = {
             refresh_token,
             process.env.REFRESH_TOKEN_SECRET
           )
+          const userDB = await db('manager')
+            .where({
+              username: user.username,
+              mail: user.mail
+            })
+            .first('password', 'username', 'mail', 'roles', 'id')
+          if (!userDB) {
+            throw new UserInputError('invalid user')
+          }
+
           accessToken = generateToken.access({
             username: user.username,
             roles: user.roles,
