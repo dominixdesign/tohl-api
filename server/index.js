@@ -104,9 +104,10 @@ server.applyMiddleware({
   app,
   cors: {
     origin: [
-      'https://2016.my-tohl.org',
-      'https://my-tohl.org',
-      'http://localhost:3001'
+      'https://2016.my-tohl.org', //current test domain
+      'https://my-tohl.org', // prod domain
+      'http://localhost:3001', //dev
+      'http://localhost' //app
     ]
   }
 })
