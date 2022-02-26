@@ -23,6 +23,20 @@ module.exports = () => ({
       .select()
       .then((rows) => ids.map((id) => rows.find((x) => x.id === id)))
   ),
+  board: new DataLoader((ids) =>
+    db
+      .table('bb_board')
+      .whereIn('id', ids)
+      .select()
+      .then((rows) => ids.map((id) => rows.find((x) => x.id === id)))
+  ),
+  post: new DataLoader((ids) =>
+    db
+      .table('bb_post')
+      .whereIn('id', ids)
+      .select()
+      .then((rows) => ids.map((id) => rows.find((x) => x.id === id)))
+  ),
   game: new DataLoader((ids) =>
     db
       .table('game')

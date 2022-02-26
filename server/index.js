@@ -13,6 +13,8 @@ const createDataloders = require('./helpers/dataLoaders')
 
 const allowedErrors = ['BAD_USER_INPUT']
 
+const isWin = process.platform === 'win32'
+
 // modules
 const modules = [
   'global',
@@ -27,7 +29,10 @@ const modules = [
   'penalty',
   'game_event',
   'lineup',
-  'lines'
+  'lines',
+  'bb_board',
+  'bb_post',
+  'bb_comment'
 ]
 let _typeDefs = []
 let _resolvers = []
@@ -107,6 +112,7 @@ server.applyMiddleware({
       'https://2016.my-tohl.org', //current test domain
       'https://my-tohl.org', // prod domain
       'http://localhost:3001', //dev
+      'https://localhost:3001', //dev
       'http://localhost' //app
     ]
   }
@@ -118,4 +124,16 @@ app.use(
 )
 app.use(require('./routes/upload'))
 
-app.listen(3000, () => console.log(`Example app listening on port 3000!`))
+if (isWin) {
+  const fs = require('fs')
+  const https = require('https')
+
+  const key = fs.readFileSync('../tohl-ui/localhost-key.pem', 'utf-8')
+  const cert = fs.readFileSync('../tohl-ui/localhost.pem', 'utf-8')
+
+  https
+    .createServer({ key, cert }, app)
+    .listen(3000, () => console.log(`TOHL API listening on port 3000!`))
+} else {
+  app.listen(3000, () => console.log(`TOHL API listening on port 3000!`))
+}

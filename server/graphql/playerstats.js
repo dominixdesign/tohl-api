@@ -22,8 +22,10 @@ module.exports = {
       plusminus: Int
       pim: Int
       shots: Int
+      shotspercentage: Float
       hits: Int
       icetime: Int
+      itg: Float
       evg: Int
       eva: Int
       ppg: Int
@@ -111,6 +113,8 @@ module.exports = {
             db.raw('assists - ppa - sha as eva'),
             db.raw('farm_goals + farm_assists as farm_points'),
             db.raw('ROUND((saves / shotsfaced)*100, 2) as savepercentage'),
+            db.raw('ROUND((goals / shots)*100, 2) as shotspercentage'),
+            db.raw('ROUND((icetime / games), 2) as itg'),
             db.raw('ROUND(goalsagainst / (minutes / 60),2) as gaa')
           ])
       }
