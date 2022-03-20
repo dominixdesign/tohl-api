@@ -17,6 +17,11 @@ module.exports = {
       board(board: ID!): Board
     }
   `,
+  permissions: {
+    Query: {
+      board: 'requiresGM'
+    }
+  },
   resolvers: {
     Board: {
       parent: (parent, _, { loader: { board } }) =>
