@@ -3,6 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const fileUpload = require('express-fileupload')
 const { ApolloServer } = require('apollo-server-express')
+const { applyMiddleware } = require('graphql-middleware')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
 const jwt = require('jsonwebtoken')
 const AuhtDirective = require('./middleware/authDirective')
@@ -10,6 +11,7 @@ const ownTeamDirective = require('./middleware/ownTeamDirective')
 const managedTeamDirective = require('./middleware/managedTeamDirective')
 const db = require('./helpers/db')
 const createDataloders = require('./helpers/dataLoaders')
+const generateMiddleware = require('./middleware')
 
 const allowedErrors = ['BAD_USER_INPUT']
 
@@ -36,11 +38,25 @@ const modules = [
 ]
 let _typeDefs = []
 let _resolvers = []
+let _permissions = []
 modules.forEach((module) => {
-  const { typeDefs, resolvers } = require(`./graphql/${module}`)
+  const { typeDefs, resolvers, permissions } = require(`./graphql/${module}`)
   _typeDefs.push(typeDefs)
   _resolvers.push(resolvers)
+  _permissions.push(permissions)
 })
+
+const executableSchema = makeExecutableSchema({
+  typeDefs: _typeDefs,
+  resolvers: _resolvers,
+  schemaDirectives: {
+    auth: AuhtDirective,
+    ownTeam: ownTeamDirective,
+    managedTeam: managedTeamDirective
+  }
+})
+const middleware = generateMiddleware(_permissions)
+const schemaWithMiddleware = applyMiddleware(executableSchema, ...middleware)
 
 const server = new ApolloServer({
   formatError: (err) => {
@@ -59,15 +75,7 @@ const server = new ApolloServer({
     }
   },
   plugins: [require('./middleware/errorHandling')],
-  schema: makeExecutableSchema({
-    typeDefs: _typeDefs,
-    resolvers: _resolvers,
-    schemaDirectives: {
-      auth: AuhtDirective,
-      ownTeam: ownTeamDirective,
-      managedTeam: managedTeamDirective
-    }
-  }),
+  schema: schemaWithMiddleware,
   context: async ({ req }) => {
     const authHeader = req.headers.authorization
     let user = {}
