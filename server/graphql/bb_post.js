@@ -31,7 +31,7 @@ module.exports = {
   },
   resolvers: {
     Post: {
-      board: (parent, _, { loader: { board } }) => board.load(parent.parent),
+      board: (parent, _, { loader: { board } }) => board.load(parent.board),
       comments: async (parent, { limit }) =>
         comment.resolvers.Query.comments(undefined, {
           parent: parent.id,
@@ -44,9 +44,18 @@ module.exports = {
     Query: {
       posts: async (_, { board, limit }) =>
         db('bb_post')
+          .select('*')
+          .max('bb_comment.timestamp', {
+            as: 'lastComment'
+          })
           .where({ board })
+          .joinRaw(
+            'LEFT JOIN `bb_comment` ON `bb_comment`.`parent` = `bb_post`.`id` AND `bb_comment`.`parent_type` = "post"'
+          )
+          .groupBy(db.raw('`bb_post`.`id`'))
+          .orderBy('lastComment', 'desc')
           .limit(limit || 20)
-          .select(),
+          .debug(),
       post: async (_, { post }) =>
         db('bb_post').where({ id: post }).select().first()
     },
