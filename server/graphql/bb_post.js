@@ -54,8 +54,7 @@ module.exports = {
           )
           .groupBy(db.raw('`bb_post`.`id`'))
           .orderBy('lastComment', 'desc')
-          .limit(limit || 20)
-          .debug(),
+          .limit(limit || 20),
       post: async (_, { post }) =>
         db('bb_post').where({ id: post }).select().first()
     },
