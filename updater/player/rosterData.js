@@ -39,7 +39,7 @@ module.exports = {
     let mergeFields = []
 
     // clean rosterData for this season
-    db('playerdata').where('season', season).del()
+    await db('playerdata').where('season', season).del().then().catch()
 
     let rawHtml = loadFHLFile('Rosters')
     const teams = rawHtml.split('<H2>')
